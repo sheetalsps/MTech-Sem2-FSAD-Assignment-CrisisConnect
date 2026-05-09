@@ -20,11 +20,24 @@ mongoose.connect('mongodb://localhost:27017/crisisconnect')
 
 // Resource Schema
 const resourceSchema = new mongoose.Schema({
+  resourceType: {
+    type: String,
+    enum: ['general', 'hospital_bed', 'blood_request'],
+    default: 'general'
+  },
   category: { type: String, required: true },
   quantity: { type: Number, required: true, min: 0 },
   location: { type: String, required: true },
   status: { type: String, enum: ['Available', 'In Use', 'Depleted', 'Reserved'], default: 'Available' },
   description: { type: String, default: '' },
+  wardType: { type: String, default: '' },
+  bedUnitLabel: { type: String, default: '' },
+  bloodGroup: { type: String, default: '' },
+  bloodUrgency: {
+    type: String,
+    enum: ['low', 'medium', 'high', 'critical'],
+    default: 'medium'
+  },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });
@@ -56,11 +69,16 @@ app.get('/resources/:id', async (req, res) => {
 app.post('/resources', async (req, res) => {
   try {
     const resource = new Resource({
+      resourceType: req.body.resourceType || 'general',
       category: req.body.category,
       quantity: req.body.quantity,
       location: req.body.location,
       status: req.body.status || 'Available',
-      description: req.body.description || ''
+      description: req.body.description || '',
+      wardType: req.body.wardType || '',
+      bedUnitLabel: req.body.bedUnitLabel || '',
+      bloodGroup: req.body.bloodGroup || '',
+      bloodUrgency: req.body.bloodUrgency || 'medium'
     });
     const savedResource = await resource.save();
     res.status(201).json(savedResource);

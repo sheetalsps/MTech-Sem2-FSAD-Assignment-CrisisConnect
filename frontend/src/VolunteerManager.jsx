@@ -1,6 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { fetchVolunteers, createVolunteer, updateVolunteer, deleteVolunteer } from './services/api';
+import {
+  fetchVolunteers,
+  createVolunteer,
+  updateVolunteer,
+  deleteVolunteer,
+  patchVolunteerApproval
+} from './services/api';
 
 function VolunteerManager() {
   const [volunteers, setVolunteers] = useState([]);
@@ -76,8 +82,22 @@ function VolunteerManager() {
     }
   };
 
+  const volunteerKey = (v) => v.id || v._id;
+
+  const handleApproval = async (volunteerId, approvalStatus) => {
+    setLoading(true);
+    try {
+      await patchVolunteerApproval(volunteerId, approvalStatus);
+      await loadVolunteers();
+    } catch (error) {
+      console.error('Approval failed:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleEdit = (volunteer) => {
-    setEditingId(volunteer.id);
+    setEditingId(volunteerKey(volunteer));
     setForm({
       name: volunteer.name,
       location: volunteer.location,
@@ -159,20 +179,42 @@ function VolunteerManager() {
             {loading && <p>Loading volunteers...</p>}
             <div className="resource-grid">
               {volunteers.map((volunteer) => (
-                <article key={volunteer.id} className="resource-card">
+                <article key={volunteerKey(volunteer)} className="resource-card">
                   <div className="card-row">
                     <span className="pill type-pill">{volunteer.name}</span>
+                    <span className={`pill status-pill approval-${volunteer.approvalStatus || 'approved'}`}>
+                      {volunteer.approvalStatus || 'approved'}
+                    </span>
                     <span className={`pill status-pill ${volunteer.available ? 'available' : 'depleted'}`}>
                       {volunteer.available ? 'Available' : 'Unavailable'}
                     </span>
                   </div>
+                  <p className="card-meta">{volunteer.username ? `@${volunteer.username}` : 'Manual roster entry'}</p>
                   <h3>{volunteer.location}</h3>
                   <p className="description">{(volunteer.skills || []).join(', ') || 'No skills listed.'}</p>
+                  {volunteer.approvalStatus === 'pending' && (
+                    <div className="approval-actions">
+                      <button
+                        type="button"
+                        className="button small"
+                        onClick={() => handleApproval(volunteerKey(volunteer), 'approved')}
+                      >
+                        Approve
+                      </button>
+                      <button
+                        type="button"
+                        className="button small secondary"
+                        onClick={() => handleApproval(volunteerKey(volunteer), 'rejected')}
+                      >
+                        Reject
+                      </button>
+                    </div>
+                  )}
                   <div className="resource-actions">
                     <button onClick={() => handleEdit(volunteer)} className="edit-btn">
                       Edit
                     </button>
-                    <button onClick={() => handleDelete(volunteer.id)} className="delete-btn">
+                    <button onClick={() => handleDelete(volunteerKey(volunteer))} className="delete-btn">
                       Delete
                     </button>
                   </div>

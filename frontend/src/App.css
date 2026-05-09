@@ -541,3 +541,141 @@ button:hover {
   }
 }
 
+.broadcast-banner-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.broadcast-banner {
+  border-radius: 16px;
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.95rem;
+}
+
+.broadcast-banner.severity-info {
+  background: #e0f2fe;
+  border: 1px solid #bae6fd;
+  color: #0c4a6e;
+}
+
+.broadcast-banner.severity-warning {
+  background: #fef3c7;
+  border: 1px solid #fcd34d;
+  color: #92400e;
+}
+
+.broadcast-banner.severity-critical {
+  background: #fee2e2;
+  border: 1px solid #f87171;
+  color: #7f1d1d;
+}
+
+.inline-notice {
+  margin-top: 8px !important;
+  font-size: 0.9rem;
+}
+
+.analytics-bars {
+  margin-top: 20px;
+  padding: 20px;
+}
+
+.bar-row {
+  display: grid;
+  grid-template-columns: 120px 1fr 40px;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+  font-size: 0.9rem;
+}
+
+.bar-track {
+  height: 10px;
+  background: #e2e8f0;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.bar-fill.status {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary), var(--accent));
+}
+
+.bar-fill.priority.critical { background: #7f1d1d; }
+.bar-fill.priority.high { background: #dc2626; }
+.bar-fill.priority.medium { background: #f59e0b; }
+.bar-fill.priority.low { background: #3b82f6; }
+
+.broadcast-list .broadcast-item {
+  border-radius: 18px;
+  padding: 16px;
+  margin-bottom: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.broadcast-item.severity-critical {
+  border-color: rgba(239, 68, 68, 0.35);
+}
+
+.volunteer-toolbar {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.volunteer-toolbar input {
+  width: 72px;
+}
+
+.approval-actions {
+  display: flex;
+  gap: 10px;
+  margin: 10px 0;
+}
+
+.status-pill.approval-pending { background: #fef3c7; color: #92400e; }
+.status-pill.approval-approved { background: #d1fae5; color: #065f46; }
+.status-pill.approval-rejected { background: #fee2e2; color: #b91c1c; }
+
+.nested-card {
+  margin-top: 20px;
+  background: var(--surface-soft);
+}
+
+.staff-assign {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+  margin-bottom: 16px;
+}
+
+.staff-assign select {
+  min-width: 220px;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.small-print {
+  font-size: 0.82rem;
+}
+
+.assignments-panel .assignment-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.profile-summary {
+  line-height: 1.6;
+}
+

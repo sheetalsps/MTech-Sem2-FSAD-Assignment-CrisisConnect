@@ -1,6 +1,12 @@
 import { Routes, Route, Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { fetchIncidents, fetchVolunteers, fetchResources, createIncident } from './services/api';
+import {
+  fetchIncidents,
+  fetchVolunteers,
+  fetchResources,
+  createIncident,
+  fetchBroadcasts
+} from './services/api';
 import { AuthProvider, useAuth } from './AuthContext';
 import ProtectedRoute from './ProtectedRoute';
 import IncidentManager from './IncidentManager';
@@ -9,6 +15,8 @@ import MyRequests from './MyRequests';
 import ResourceManager from './ResourceManager';
 import VolunteerManager from './VolunteerManager';
 import AdminDashboard from './AdminDashboard';
+import AnalyticsDashboard from './AnalyticsDashboard';
+import VolunteerPortal from './VolunteerPortal';
 import Login from './Login';
 import Signup from './Signup';
 
@@ -16,17 +24,42 @@ function Dashboard() {
   const [incidents, setIncidents] = useState([]);
   const [volunteers, setVolunteers] = useState([]);
   const [resources, setResources] = useState([]);
+  const [broadcasts, setBroadcasts] = useState([]);
+  const { user, logout, hasRole } = useAuth();
 
   useEffect(() => {
     async function load() {
-      setIncidents(await fetchIncidents());
-      setVolunteers(await fetchVolunteers());
-      setResources(await fetchResources());
+      try {
+        const vol = await fetchVolunteers();
+        setVolunteers(vol);
+      } catch {
+        setVolunteers([]);
+      }
+
+      if (!user) {
+        setIncidents([]);
+        setResources([]);
+        setBroadcasts([]);
+        return;
+      }
+
+      try {
+        const [inc, res, bc] = await Promise.all([
+          fetchIncidents(),
+          fetchResources(),
+          fetchBroadcasts().catch(() => [])
+        ]);
+        setIncidents(inc);
+        setResources(res);
+        setBroadcasts(Array.isArray(bc) ? bc.slice(0, 5) : []);
+      } catch {
+        setIncidents([]);
+        setResources([]);
+        setBroadcasts([]);
+      }
     }
     load();
-  }, []);
-
-  const { user, logout, hasRole } = useAuth();
+  }, [user]);
 
   return (
     <div className="page">
@@ -55,23 +88,38 @@ function Dashboard() {
           <div className="header-actions">
             <Link className="button" to="/request">Submit SOS Request</Link>
             {user && <Link className="button secondary" to="/my-requests">My Requests</Link>}
+            {hasRole('volunteer') && <Link className="button secondary" to="/volunteer">Volunteer hub</Link>}
             {hasRole('staff', 'admin') && <Link className="button secondary" to="/incidents">Manage Incidents</Link>}
             {hasRole('staff', 'admin') && <Link className="button secondary" to="/resources">Manage Resources</Link>}
-            {hasRole('staff', 'admin') && <Link className="button secondary" to="/volunteers">Manage Volunteers</Link>}
+            {hasRole('staff', 'admin') && <Link className="button secondary" to="/volunteers">Volunteers & approvals</Link>}
+            {(hasRole('staff', 'admin')) && (
+              <Link className="button secondary" to="/analytics">Analytics & broadcasts</Link>
+            )}
             {hasRole('admin') && <Link className="button secondary" to="/admin">Admin Users</Link>}
           </div>
         </div>
       </header>
 
+      {broadcasts.length > 0 && (
+        <section className="broadcast-banner-stack">
+          {broadcasts.map((b) => (
+            <div key={b._id} className={`broadcast-banner severity-${b.severity}`}>
+              <strong>{b.title}</strong>
+              <span>{b.message}</span>
+            </div>
+          ))}
+        </section>
+      )}
+
       <section className="dashboard-summary">
         <div className="stats-grid">
           <article className="stat-card primary">
             <p className="stat-label">Live Incidents</p>
-            <h3>{incidents.length}</h3>
+            <h3>{user ? incidents.length : '—'}</h3>
           </article>
           <article className="stat-card accent">
             <p className="stat-label">Available Resources</p>
-            <h3>{resources.length}</h3>
+            <h3>{user ? resources.length : '—'}</h3>
           </article>
           <article className="stat-card secondary">
             <p className="stat-label">Volunteers Ready</p>
@@ -85,6 +133,7 @@ function Dashboard() {
           <div>
             <h2>Active Incidents</h2>
             <p>Prioritized emergency requests from the field.</p>
+            {!user && <p className="notice inline-notice">Sign in to view live incident detail and tracking links.</p>}
           </div>
           {hasRole('staff', 'admin') && (
             <Link className="button small" to="/incidents">Manage Incidents</Link>
@@ -92,6 +141,9 @@ function Dashboard() {
         </div>
 
         <div className="card-grid">
+          {!user && (
+            <p className="notice">Incident summaries require an authenticated session.</p>
+          )}
           {incidents.map((incident) => (
             <article key={incident._id} className="data-card incident-card">
               <div className="card-row">
@@ -130,6 +182,7 @@ function Dashboard() {
         </div>
 
         <div className="card-grid">
+          {!user && <p className="notice">Log in to browse full resource inventory.</p>}
           {resources.map((resource) => (
             <article key={resource._id} className="data-card resource-card">
               <div className="card-row">
@@ -362,6 +415,22 @@ function App() {
           element={
             <ProtectedRoute roles={[ 'admin' ]}>
               <AdminDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/analytics"
+          element={
+            <ProtectedRoute roles={[ 'staff', 'admin' ]}>
+              <AnalyticsDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/volunteer"
+          element={
+            <ProtectedRoute roles={[ 'volunteer' ]}>
+              <VolunteerPortal />
             </ProtectedRoute>
           }
         />

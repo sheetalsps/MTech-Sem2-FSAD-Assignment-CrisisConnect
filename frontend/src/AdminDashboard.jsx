@@ -87,7 +87,8 @@ function AdminDashboard() {
                     value={user.role}
                     onChange={(event) => handleRoleChange(user._id, event.target.value)}
                   >
-                    <option value="user">User</option>
+                    <option value="user">Citizen</option>
+                    <option value="volunteer">Volunteer</option>
                     <option value="staff">Staff</option>
                     <option value="admin">Admin</option>
                   </select>

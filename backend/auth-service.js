@@ -20,7 +20,7 @@ mongoose.connect('mongodb://localhost:27017/crisisconnect')
 const userSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
   passwordHash: { type: String, required: true },
-  role: { type: String, enum: ['user', 'staff', 'admin'], default: 'user' },
+  role: { type: String, enum: ['user', 'staff', 'admin', 'volunteer'], default: 'user' },
   createdAt: { type: Date, default: Date.now }
 });
 
@@ -75,7 +75,7 @@ app.post('/signup', async (req, res) => {
     if (!username || !password) {
       return res.status(400).json({ error: 'Username and password are required' });
     }
-    if (!['user', 'staff', 'admin'].includes(role)) {
+    if (!['user', 'staff', 'admin', 'volunteer'].includes(role)) {
       return res.status(400).json({ error: 'Invalid role' });
     }
 
@@ -135,7 +135,7 @@ app.put('/users/:id', async (req, res) => {
   if (!session) return;
   try {
     const { role } = req.body;
-    if (role && !['user', 'staff', 'admin'].includes(role)) {
+    if (role && !['user', 'staff', 'admin', 'volunteer'].includes(role)) {
       return res.status(400).json({ error: 'Invalid role' });
     }
 

@@ -49,7 +49,8 @@ export default function Signup() {
           <label>
             Role
             <select name="role" value={form.role} onChange={handleChange}>
-              <option value="user">User</option>
+              <option value="user">Citizen</option>
+              <option value="volunteer">Volunteer</option>
               <option value="staff">Staff</option>
               <option value="admin">Admin</option>
             </select>

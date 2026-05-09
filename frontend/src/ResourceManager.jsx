@@ -6,11 +6,16 @@ function ResourceManager() {
   const [resources, setResources] = useState([]);
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState({
+    resourceType: 'general',
     category: '',
     quantity: '',
     location: '',
     status: 'Available',
-    description: ''
+    description: '',
+    wardType: '',
+    bedUnitLabel: '',
+    bloodGroup: '',
+    bloodUrgency: 'medium'
   });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
@@ -67,11 +72,16 @@ function ResourceManager() {
         await createResource(payload);
       }
       setForm({
+        resourceType: 'general',
         category: '',
         quantity: '',
         location: '',
         status: 'Available',
-        description: ''
+        description: '',
+        wardType: '',
+        bedUnitLabel: '',
+        bloodGroup: '',
+        bloodUrgency: 'medium'
       });
       loadResources();
     } catch (error) {
@@ -84,11 +94,16 @@ function ResourceManager() {
   const handleEdit = (resource) => {
     setEditingId(resource._id);
     setForm({
+      resourceType: resource.resourceType || 'general',
       category: resource.category,
       quantity: resource.quantity.toString(),
       location: resource.location,
       status: resource.status,
-      description: resource.description || ''
+      description: resource.description || '',
+      wardType: resource.wardType || '',
+      bedUnitLabel: resource.bedUnitLabel || '',
+      bloodGroup: resource.bloodGroup || '',
+      bloodUrgency: resource.bloodUrgency || 'medium'
     });
     setErrors({});
   };
@@ -110,11 +125,16 @@ function ResourceManager() {
   const cancelEdit = () => {
     setEditingId(null);
     setForm({
+      resourceType: 'general',
       category: '',
       quantity: '',
       location: '',
       status: 'Available',
-      description: ''
+      description: '',
+      wardType: '',
+      bedUnitLabel: '',
+      bloodGroup: '',
+      bloodUrgency: 'medium'
     });
     setErrors({});
   };
@@ -134,6 +154,18 @@ function ResourceManager() {
           <div className="card">
             <h2>{editingId ? 'Edit Resource' : 'Add New Resource'}</h2>
             <form onSubmit={handleSubmit}>
+              <label>
+                Resource type
+                <select
+                  name="resourceType"
+                  value={form.resourceType}
+                  onChange={handleChange}
+                >
+                  <option value="general">General supplies</option>
+                  <option value="hospital_bed">Hospital beds</option>
+                  <option value="blood_request">Blood donation need</option>
+                </select>
+              </label>
               <div className="form-row">
                 <label>
                   Category *
@@ -182,6 +214,35 @@ function ResourceManager() {
                   </select>
                 </label>
               </div>
+              {form.resourceType === 'hospital_bed' && (
+                <div className="form-row">
+                  <label>
+                    Ward / unit type
+                    <input name="wardType" value={form.wardType} onChange={handleChange} placeholder="ICU, General" />
+                  </label>
+                  <label>
+                    Bed label
+                    <input name="bedUnitLabel" value={form.bedUnitLabel} onChange={handleChange} placeholder="Ward A-12" />
+                  </label>
+                </div>
+              )}
+              {form.resourceType === 'blood_request' && (
+                <div className="form-row">
+                  <label>
+                    Blood group
+                    <input name="bloodGroup" value={form.bloodGroup} onChange={handleChange} placeholder="O+, B-" />
+                  </label>
+                  <label>
+                    Urgency
+                    <select name="bloodUrgency" value={form.bloodUrgency} onChange={handleChange}>
+                      <option value="low">Low</option>
+                      <option value="medium">Medium</option>
+                      <option value="high">High</option>
+                      <option value="critical">Critical</option>
+                    </select>
+                  </label>
+                </div>
+              )}
               <label>
                 Description
                 <textarea
@@ -213,6 +274,9 @@ function ResourceManager() {
               {resources.map((resource) => (
                 <article key={resource._id} className="resource-card">
                   <div className="card-row">
+                    <span className="pill resource-pill">
+                      {(resource.resourceType || 'general').replace('_', ' ')}
+                    </span>
                     <span className="pill resource-pill">{resource.category}</span>
                     <span className={`pill status-pill ${resource.status.toLowerCase().replace(' ', '-')}`}>
                       {resource.status}

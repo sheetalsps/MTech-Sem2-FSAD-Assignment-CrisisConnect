@@ -137,6 +137,106 @@ export async function deleteIncident(id) {
   });
 }
 
+export async function updateLiveLocation(incidentId, latitude, longitude) {
+  return requestJson(`${GATEWAY}/incidents/${incidentId}/live-location`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ latitude, longitude })
+  });
+}
+
+export async function fetchNearbyIncidents(lat, lng, radiusKm = 40) {
+  const params = new URLSearchParams({ lat: String(lat), lng: String(lng), radiusKm: String(radiusKm) });
+  return requestJson(`${GATEWAY}/incidents/nearby?${params}`);
+}
+
+export async function offerIncidentHelp(incidentId) {
+  return requestJson(`${GATEWAY}/incidents/${incidentId}/assignments/offer`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({})
+  });
+}
+
+export async function staffAssignIncident(incidentId, payload) {
+  return requestJson(`${GATEWAY}/incidents/${incidentId}/assignments`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+}
+
+export async function patchIncidentAssignment(incidentId, volunteerProfileId, payload) {
+  return requestJson(`${GATEWAY}/incidents/${incidentId}/assignments/${volunteerProfileId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+}
+
+export async function registerVolunteerProfile(payload) {
+  return requestJson(`${GATEWAY}/volunteers/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+}
+
+export async function fetchMyVolunteerProfile() {
+  return requestJson(`${GATEWAY}/volunteers/me/profile`);
+}
+
+/** Returns null when no volunteer profile exists (404). */
+export async function fetchMyVolunteerProfileOrNull() {
+  const headers = { ...getAuthHeaders() };
+  let response;
+  try {
+    response = await fetch(`${GATEWAY}/volunteers/me/profile`, { headers });
+  } catch {
+    throw new Error('Unable to contact API gateway.');
+  }
+  if (response.status === 404) return null;
+  if (!response.ok) {
+    let message = `Request failed: ${response.status}`;
+    try {
+      const body = await response.json();
+      if (body?.error) message = body.error;
+    } catch {
+      /* ignore */
+    }
+    throw new Error(message);
+  }
+  return response.json();
+}
+
+export async function patchVolunteerApproval(volunteerId, approvalStatus) {
+  return requestJson(`${GATEWAY}/volunteers/${volunteerId}/approval`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ approvalStatus })
+  });
+}
+
+export async function fetchMyAssignments() {
+  return requestJson(`${GATEWAY}/my-assignments`);
+}
+
+export async function fetchAnalyticsSummary() {
+  return requestJson(`${GATEWAY}/analytics/summary`);
+}
+
+export async function fetchBroadcasts() {
+  return requestJson(`${GATEWAY}/broadcasts`);
+}
+
+export async function createBroadcast(payload) {
+  return requestJson(`${GATEWAY}/broadcasts`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+}
+
 export async function login(payload) {
   return requestJson(`${GATEWAY}/auth/login`, {
     method: 'POST',
