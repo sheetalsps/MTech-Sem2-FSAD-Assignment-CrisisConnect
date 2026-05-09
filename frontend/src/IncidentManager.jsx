@@ -178,22 +178,21 @@ function IncidentManager() {
           <div className="card">
             <h2>All Incidents ({incidents.length})</h2>
             {loading && <p>Loading...</p>}
-            <div className="incident-list">
+            <div className="incident-grid">
               {incidents.map((incident) => (
-                <div key={incident._id} className="incident-item">
-                  <div className="incident-header">
-                    <h3>{incident.type}</h3>
-                    <div className="incident-meta">
-                      <span className={`priority ${incident.priority.toLowerCase()}`}>
-                        {incident.priority}
-                      </span>
-                      <span className={`status ${incident.status.toLowerCase().replace(' ', '-')}`}>
-                        {incident.status}
-                      </span>
-                    </div>
+                <article key={incident._id} className="incident-card">
+                  <div className="card-row">
+                    <span className="pill type-pill">{incident.type}</span>
+                    <span className={`pill status-pill ${incident.status.toLowerCase().replace(' ', '-')}`}>
+                      {incident.status}
+                    </span>
                   </div>
-                  <p className="location">📍 {incident.location}</p>
+                  <h3>{incident.location}</h3>
                   <p className="description">{incident.description}</p>
+                  <div className="card-row card-row-alt">
+                    <span className={`priority-chip ${incident.priority.toLowerCase()}`}>{incident.priority}</span>
+                    <span className="card-meta">Updated {new Date(incident.updatedAt).toLocaleDateString()}</span>
+                  </div>
                   <div className="incident-actions">
                     <button onClick={() => handleEdit(incident)} className="edit-btn">
                       Edit
@@ -202,7 +201,7 @@ function IncidentManager() {
                       Delete
                     </button>
                   </div>
-                </div>
+                </article>
               ))}
             </div>
           </div>

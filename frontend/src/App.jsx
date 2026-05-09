@@ -32,43 +32,80 @@ function Dashboard() {
         </div>
       </header>
 
-      <section>
-        <h2>Active Incidents</h2>
+      <section className="dashboard-summary">
+        <div className="stats-grid">
+          <article className="stat-card primary">
+            <p className="stat-label">Live Incidents</p>
+            <h3>{incidents.length}</h3>
+          </article>
+          <article className="stat-card accent">
+            <p className="stat-label">Available Resources</p>
+            <h3>{resources.length}</h3>
+          </article>
+          <article className="stat-card secondary">
+            <p className="stat-label">Volunteers Ready</p>
+            <h3>{volunteers.length}</h3>
+          </article>
+        </div>
+      </section>
+
+      <section className="section-panel">
+        <div className="section-header">
+          <div>
+            <h2>Active Incidents</h2>
+            <p>Prioritized emergency requests from the field.</p>
+          </div>
+          <Link className="button small" to="/incidents">Manage Incidents</Link>
+        </div>
+
         <div className="card-grid">
           {incidents.map((incident) => (
-            <article key={incident._id} className="card">
-              <h3>{incident.type}</h3>
+            <article key={incident._id} className="data-card incident-card">
+              <div className="card-row">
+                <span className="pill type-pill">{incident.type}</span>
+                <span className={`pill status-pill ${incident.status.toLowerCase().replace(' ', '-')}`}>
+                  {incident.status}
+                </span>
+              </div>
+              <h3>{incident.location}</h3>
               <p>{incident.description}</p>
-              <p><strong>Location:</strong> {incident.location}</p>
-              <p><strong>Priority:</strong> {incident.priority}</p>
-              <p><strong>Status:</strong> {incident.status}</p>
+              <div className="card-row card-row-alt">
+                <span className={`priority-chip ${incident.priority.toLowerCase()}`}>
+                  {incident.priority}
+                </span>
+                <span className="card-meta">Created {new Date(incident.createdAt).toLocaleDateString()}</span>
+              </div>
             </article>
           ))}
         </div>
       </section>
 
-      <section>
-        <div className="list-panel">
-          <div className="card">
-            <h2>Volunteers</h2>
-            <ul>
-              {volunteers.map((volunteer) => (
-                <li key={volunteer.id}>
-                  {volunteer.name} — {volunteer.skills.join(', ')}
-                </li>
-              ))}
-            </ul>
+      <section className="section-panel">
+        <div className="section-header">
+          <div>
+            <h2>Resource Inventory</h2>
+            <p>Current supply status for urgent operations.</p>
           </div>
-          <div className="card">
-            <h2>Resources</h2>
-            <ul>
-              {resources.map((resource) => (
-                <li key={resource._id}>
-                  {resource.category} ({resource.quantity}) — {resource.status}
-                </li>
-              ))}
-            </ul>
-          </div>
+          <Link className="button small secondary" to="/resources">Manage Resources</Link>
+        </div>
+
+        <div className="card-grid">
+          {resources.map((resource) => (
+            <article key={resource._id} className="data-card resource-card">
+              <div className="card-row">
+                <span className="pill resource-pill">{resource.category}</span>
+                <span className={`pill status-pill ${resource.status.toLowerCase().replace(' ', '-')}`}>
+                  {resource.status}
+                </span>
+              </div>
+              <h3>{resource.location}</h3>
+              <p>{resource.description || 'No description provided.'}</p>
+              <div className="card-row card-row-alt">
+                <span className="quantity-chip">Qty: {resource.quantity}</span>
+                <span className="card-meta">Updated {new Date(resource.updatedAt).toLocaleDateString()}</span>
+              </div>
+            </article>
+          ))}
         </div>
       </section>
     </div>

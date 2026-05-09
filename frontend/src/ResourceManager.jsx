@@ -209,22 +209,21 @@ function ResourceManager() {
           <div className="card">
             <h2>All Resources ({resources.length})</h2>
             {loading && <p>Loading...</p>}
-            <div className="resource-list">
+            <div className="resource-grid">
               {resources.map((resource) => (
-                <div key={resource._id} className="resource-item">
-                  <div className="resource-header">
-                    <h3>{resource.category}</h3>
-                    <div className="resource-meta">
-                      <span className={`quantity ${resource.quantity < 10 ? 'low' : resource.quantity < 50 ? 'medium' : 'high'}`}>
-                        Qty: {resource.quantity}
-                      </span>
-                      <span className={`status ${resource.status.toLowerCase().replace(' ', '-')}`}>
-                        {resource.status}
-                      </span>
-                    </div>
+                <article key={resource._id} className="resource-card">
+                  <div className="card-row">
+                    <span className="pill resource-pill">{resource.category}</span>
+                    <span className={`pill status-pill ${resource.status.toLowerCase().replace(' ', '-')}`}>
+                      {resource.status}
+                    </span>
                   </div>
-                  <p className="location">📍 {resource.location}</p>
-                  {resource.description && <p className="description">{resource.description}</p>}
+                  <h3>{resource.location}</h3>
+                  <p className="description">{resource.description || 'No extra details.'}</p>
+                  <div className="card-row card-row-alt">
+                    <span className="quantity-chip">Qty: {resource.quantity}</span>
+                    <span className="card-meta">Updated {new Date(resource.updatedAt).toLocaleDateString()}</span>
+                  </div>
                   <div className="resource-actions">
                     <button onClick={() => handleEdit(resource)} className="edit-btn">
                       Edit
@@ -233,7 +232,7 @@ function ResourceManager() {
                       Delete
                     </button>
                   </div>
-                </div>
+                </article>
               ))}
             </div>
           </div>
