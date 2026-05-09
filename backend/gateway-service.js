@@ -37,20 +37,38 @@ function checkRole(user, roles) {
 }
 
 app.post('/api/auth/signup', async (req, res) => {
-  const response = await axios.post(`${AUTH_URL}/signup`, req.body);
-  res.json(response.data);
+  try {
+    const response = await axios.post(`${AUTH_URL}/signup`, req.body);
+    res.json(response.data);
+  } catch (error) {
+    const status = error.response?.status || 502;
+    const message = error.response?.data?.error || 'Authentication service unavailable';
+    res.status(status).json({ error: message });
+  }
 });
 
 app.post('/api/auth/login', async (req, res) => {
-  const response = await axios.post(`${AUTH_URL}/login`, req.body);
-  res.json(response.data);
+  try {
+    const response = await axios.post(`${AUTH_URL}/login`, req.body);
+    res.json(response.data);
+  } catch (error) {
+    const status = error.response?.status || 502;
+    const message = error.response?.data?.error || 'Authentication service unavailable';
+    res.status(status).json({ error: message });
+  }
 });
 
 app.get('/api/auth/me', async (req, res) => {
-  const response = await axios.get(`${AUTH_URL}/me`, {
-    headers: { authorization: req.headers.authorization }
-  });
-  res.json(response.data);
+  try {
+    const response = await axios.get(`${AUTH_URL}/me`, {
+      headers: { authorization: req.headers.authorization }
+    });
+    res.json(response.data);
+  } catch (error) {
+    const status = error.response?.status || 502;
+    const message = error.response?.data?.error || 'Authentication service unavailable';
+    res.status(status).json({ error: message });
+  }
 });
 
 app.get('/api/incidents', async (req, res) => {

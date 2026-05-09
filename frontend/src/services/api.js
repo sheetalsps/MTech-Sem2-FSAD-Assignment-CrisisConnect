@@ -8,7 +8,14 @@ function getAuthHeaders() {
 
 async function requestJson(url, options = {}) {
   const headers = { ...options.headers, ...getAuthHeaders() };
-  const response = await fetch(url, { ...options, headers });
+  let response;
+
+  try {
+    response = await fetch(url, { ...options, headers });
+  } catch (networkError) {
+    throw new Error('Unable to contact API gateway. Please make sure the backend services are running.');
+  }
+
   if (!response.ok) {
     let message = `Request failed: ${response.status}`;
     try {

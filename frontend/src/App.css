@@ -201,6 +201,14 @@ button:hover {
   background: #4338ca;
 }
 
+.header-actions .button {
+  white-space: nowrap;
+}
+
+.button.small.secondary {
+  min-width: 160px;
+}
+
 .notice {
   margin-top: 18px;
   color: var(--success);

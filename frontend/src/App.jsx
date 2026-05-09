@@ -115,7 +115,7 @@ function Dashboard() {
             <p>Current supply status for urgent operations.</p>
           </div>
           {hasRole('staff', 'admin') && (
-            <Link className="button small secondary" to="/resources">Manage Resources</Link>
+            <Link className="button small" to="/resources">Manage Resources</Link>
           )}
         </div>
 
