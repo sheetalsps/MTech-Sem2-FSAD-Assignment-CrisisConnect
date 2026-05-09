@@ -37,6 +37,7 @@ CrisisConnect is a React single-page application backed by a Node.js **API gatew
 - Keyword-based **priority** suggestion (“AI” classification service).
 - **Swagger / OpenAPI** documentation served by the gateway.
 - **Prometheus** metrics on **`GET /metrics`** (gateway) and optional **Grafana** dashboards via Docker ([monitoring/README.md](monitoring/README.md)).
+- **Request validation** on the gateway (express-validator) and services — **`400`** responses may include `{ error, details[] }`; Swagger lists **`ValidationFailed`** alongside plain **`Error`** responses.
 
 ## Architecture
 

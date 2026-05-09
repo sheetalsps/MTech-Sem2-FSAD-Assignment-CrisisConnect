@@ -177,6 +177,29 @@ body {
   border-color: rgba(79, 70, 229, 0.2);
 }
 
+.nav-link:focus-visible,
+.site-brand:focus-visible,
+.nav-toggle:focus-visible,
+.nav-logout:focus-visible {
+  outline: 3px solid rgba(79, 70, 229, 0.55);
+  outline-offset: 2px;
+}
+
+.field-error {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.82rem;
+  color: #b91c1c;
+}
+
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+button:focus-visible {
+  outline: 3px solid rgba(79, 70, 229, 0.45);
+  outline-offset: 2px;
+}
+
 .nav-link-cta {
   background: var(--accent);
   color: white !important;

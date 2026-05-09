@@ -20,7 +20,11 @@ async function requestJson(url, options = {}) {
     let message = `Request failed: ${response.status}`;
     try {
       const errorBody = await response.json();
-      if (errorBody && errorBody.error) message = errorBody.error;
+      if (errorBody?.details?.length) {
+        message = errorBody.details.map((d) => `${d.field}: ${d.message}`).join('; ');
+      } else if (errorBody?.error) {
+        message = errorBody.error;
+      }
     } catch (e) {
       // ignore
     }

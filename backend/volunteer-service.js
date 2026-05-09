@@ -95,8 +95,14 @@ app.post('/volunteers/register', async (req, res) => {
       longitude
     } = req.body;
 
-    if (!userId || !name) {
-      return res.status(400).json({ error: 'userId and name are required' });
+    const nameTrim = String(name ?? '').trim();
+    const locationTrim = String(location ?? '').trim();
+    const details = [];
+    if (!userId) details.push({ field: 'userId', message: 'userId is required' });
+    if (!nameTrim) details.push({ field: 'name', message: 'Name is required' });
+    if (!locationTrim) details.push({ field: 'location', message: 'Location is required' });
+    if (details.length) {
+      return res.status(400).json({ error: 'Validation failed', details });
     }
 
     const existing = await Volunteer.findOne({ userId });
@@ -107,9 +113,9 @@ app.post('/volunteers/register', async (req, res) => {
     const volunteer = new Volunteer({
       userId,
       username: username || '',
-      name,
+      name: nameTrim,
       skills: Array.isArray(skills) ? skills : [],
-      location: location || '',
+      location: locationTrim,
       latitude,
       longitude,
       available: true,

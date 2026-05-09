@@ -2,8 +2,23 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 
+function validateSignup(form) {
+  const fieldErrors = {};
+  const u = form.username.trim();
+  const p = form.password;
+  if (u.length < 3 || u.length > 48) {
+    fieldErrors.username = 'Use 3–48 characters.';
+  } else if (!/^[\w.-]+$/.test(u)) {
+    fieldErrors.username = 'Letters, numbers, underscore, dot, and hyphen only.';
+  }
+  if (p.length < 8) fieldErrors.password = 'Password must be at least 8 characters.';
+  if (p.length > 128) fieldErrors.password = 'Password must be at most 128 characters.';
+  return fieldErrors;
+}
+
 export default function Signup() {
   const [form, setForm] = useState({ username: '', password: '', role: 'user' });
+  const [fieldErrors, setFieldErrors] = useState({});
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { signup } = useAuth();
@@ -11,14 +26,22 @@ export default function Signup() {
 
   const handleChange = (event) => {
     setForm({ ...form, [event.target.name]: event.target.value });
+    setFieldErrors({ ...fieldErrors, [event.target.name]: '' });
     setError('');
   };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    const fe = validateSignup(form);
+    setFieldErrors(fe);
+    if (Object.keys(fe).length) return;
+
     setLoading(true);
     try {
-      await signup(form);
+      await signup({
+        ...form,
+        username: form.username.trim()
+      });
       navigate('/');
     } catch (err) {
       setError(err.message || 'Signup failed');
@@ -37,14 +60,38 @@ export default function Signup() {
       </header>
 
       <main className="card auth-card">
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} noValidate aria-busy={loading}>
           <label>
             Username
-            <input name="username" value={form.username} onChange={handleChange} required />
+            <input
+              name="username"
+              value={form.username}
+              onChange={handleChange}
+              autoComplete="username"
+              required
+              aria-invalid={!!fieldErrors.username}
+              aria-describedby={fieldErrors.username ? 'err-username' : undefined}
+            />
+            {fieldErrors.username && (
+              <span id="err-username" className="field-error" role="alert">{fieldErrors.username}</span>
+            )}
           </label>
           <label>
             Password
-            <input type="password" name="password" value={form.password} onChange={handleChange} required />
+            <input
+              type="password"
+              name="password"
+              value={form.password}
+              onChange={handleChange}
+              autoComplete="new-password"
+              required
+              minLength={8}
+              aria-invalid={!!fieldErrors.password}
+              aria-describedby={fieldErrors.password ? 'err-password' : undefined}
+            />
+            {fieldErrors.password && (
+              <span id="err-password" className="field-error" role="alert">{fieldErrors.password}</span>
+            )}
           </label>
           <label>
             Role
@@ -55,7 +102,7 @@ export default function Signup() {
               <option value="admin">Admin</option>
             </select>
           </label>
-          {error && <p className="error">{error}</p>}
+          {error && <p className="error" role="alert">{error}</p>}
           <button type="submit" disabled={loading}>{loading ? 'Creating account...' : 'Sign up'}</button>
         </form>
         <p className="auth-footer">

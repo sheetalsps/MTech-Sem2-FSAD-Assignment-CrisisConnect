@@ -164,9 +164,17 @@ app.get('/broadcasts', async (req, res) => {
 
 app.post('/broadcasts', async (req, res) => {
   try {
+    const title = String(req.body.title ?? '').trim();
+    const message = String(req.body.message ?? '').trim();
+    const det = [];
+    if (!title) det.push({ field: 'title', message: 'Title is required' });
+    if (!message) det.push({ field: 'message', message: 'Message is required' });
+    if (det.length) {
+      return res.status(400).json({ error: 'Validation failed', details: det });
+    }
     const doc = new Broadcast({
-      title: req.body.title,
-      message: req.body.message,
+      title,
+      message,
       severity: req.body.severity || 'warning',
       createdBy: req.body.createdBy || 'admin'
     });
@@ -200,6 +208,16 @@ app.get('/incidents/:id', async (req, res) => {
 
 app.post('/incidents', async (req, res) => {
   try {
+    const type = String(req.body.type ?? '').trim();
+    const location = String(req.body.location ?? '').trim();
+    const description = String(req.body.description ?? '').trim();
+    const details = [];
+    if (!type) details.push({ field: 'type', message: 'Incident type is required' });
+    if (!location) details.push({ field: 'location', message: 'Location is required' });
+    if (!description) details.push({ field: 'description', message: 'Description is required' });
+    if (details.length) {
+      return res.status(400).json({ error: 'Validation failed', details });
+    }
     const lat = req.body.latitude;
     const lon = req.body.longitude;
     const history = [];
@@ -207,12 +225,12 @@ app.post('/incidents', async (req, res) => {
       history.push({ latitude: lat, longitude: lon, recordedAt: Date.now() });
     }
     const incident = new Incident({
-      type: req.body.type || 'General',
-      location: req.body.location || 'Unknown',
+      type,
+      location,
       latitude: lat,
       longitude: lon,
       locationHistory: history,
-      description: req.body.description || '',
+      description,
       priority: req.body.priority || 'Medium',
       status: 'Open',
       requester: req.body.requester || 'Anonymous',

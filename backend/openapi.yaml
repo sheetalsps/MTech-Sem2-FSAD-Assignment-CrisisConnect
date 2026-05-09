@@ -43,6 +43,21 @@ components:
       properties:
         error:
           type: string
+    ValidationFailed:
+      type: object
+      properties:
+        error:
+          type: string
+          example: Validation failed
+        details:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+              message:
+                type: string
     UserSummary:
       type: object
       properties:
@@ -315,7 +330,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                oneOf:
+                  - $ref: '#/components/schemas/Error'
+                  - $ref: '#/components/schemas/ValidationFailed'
         '409':
           description: Username already exists
           content:

@@ -69,14 +69,32 @@ function requireAdmin(req, res) {
   return session;
 }
 
+function validateSignupInput(username, password, role) {
+  const details = [];
+  const u = String(username ?? '').trim();
+  if (u.length < 3 || u.length > 48) {
+    details.push({ field: 'username', message: 'Username must be 3–48 characters' });
+  } else if (!/^[\w.-]+$/.test(u)) {
+    details.push({ field: 'username', message: 'Username may only contain letters, numbers, underscore, dot, hyphen' });
+  }
+  const pw = String(password ?? '');
+  if (!pw) {
+    details.push({ field: 'password', message: 'Password is required' });
+  } else if (pw.length < 8 || pw.length > 128) {
+    details.push({ field: 'password', message: 'Password must be 8–128 characters' });
+  }
+  if (role != null && role !== '' && !['user', 'staff', 'admin', 'volunteer'].includes(role)) {
+    details.push({ field: 'role', message: 'Invalid role' });
+  }
+  return { username: u, details };
+}
+
 app.post('/signup', async (req, res) => {
   try {
-    const { username, password, role = 'user' } = req.body;
-    if (!username || !password) {
-      return res.status(400).json({ error: 'Username and password are required' });
-    }
-    if (!['user', 'staff', 'admin', 'volunteer'].includes(role)) {
-      return res.status(400).json({ error: 'Invalid role' });
+    const { password, role = 'user' } = req.body;
+    const { username, details } = validateSignupInput(req.body.username, password, role);
+    if (details.length) {
+      return res.status(400).json({ error: 'Validation failed', details });
     }
 
     const existing = await User.findOne({ username });
@@ -84,7 +102,7 @@ app.post('/signup', async (req, res) => {
       return res.status(409).json({ error: 'Username already exists' });
     }
 
-    const user = new User({ username, passwordHash: hashPassword(password), role });
+    const user = new User({ username, passwordHash: hashPassword(String(password)), role });
     await user.save();
 
     const token = createToken(user);
@@ -98,7 +116,13 @@ app.post('/login', async (req, res) => {
   try {
     const { username, password } = req.body;
     if (!username || !password) {
-      return res.status(400).json({ error: 'Username and password are required' });
+      return res.status(400).json({
+        error: 'Validation failed',
+        details: [
+          !username && { field: 'username', message: 'Username is required' },
+          !password && { field: 'password', message: 'Password is required' }
+        ].filter(Boolean)
+      });
     }
 
     const user = await User.findOne({ username });

@@ -6,6 +6,20 @@ const cors = require('cors');
 const yaml = require('js-yaml');
 const swaggerUi = require('swagger-ui-express');
 const { attachPrometheus } = require('./prometheus-metrics');
+const {
+  handleValidation,
+  signupBody,
+  loginBody,
+  incidentCreateBody,
+  resourceCreateBody,
+  volunteerRegisterBody,
+  broadcastCreateBody,
+  liveLocationBody,
+  chatMessageBody,
+  staffAssignmentBody,
+  assignmentPatchBody,
+  volunteerApprovalBody
+} = require('./validation');
 
 const app = express();
 app.use(cors());
@@ -86,23 +100,30 @@ function checkRole(user, roles) {
   return roles.includes(user.role);
 }
 
-app.post('/api/auth/signup', async (req, res) => {
+function forwardAxios(res, error, useAuthFallbackMessage = false) {
+  if (error.response?.data && typeof error.response.data === 'object') {
+    return res.status(error.response.status).json(error.response.data);
+  }
+  const status = error.response?.status || 502;
+  const msg = useAuthFallbackMessage ? authUpstreamMessage(error) : (error.message || 'Bad gateway');
+  res.status(status).json({ error: msg });
+}
+
+app.post('/api/auth/signup', signupBody, handleValidation, async (req, res) => {
   try {
     const response = await axios.post(`${AUTH_URL}/signup`, req.body);
-    res.json(response.data);
+    res.status(response.status || 200).json(response.data);
   } catch (error) {
-    const status = error.response?.status || 502;
-    res.status(status).json({ error: authUpstreamMessage(error) });
+    forwardAxios(res, error, true);
   }
 });
 
-app.post('/api/auth/login', async (req, res) => {
+app.post('/api/auth/login', loginBody, handleValidation, async (req, res) => {
   try {
     const response = await axios.post(`${AUTH_URL}/login`, req.body);
     res.json(response.data);
   } catch (error) {
-    const status = error.response?.status || 502;
-    res.status(status).json({ error: authUpstreamMessage(error) });
+    forwardAxios(res, error, true);
   }
 });
 
@@ -146,7 +167,7 @@ app.get('/api/broadcasts', async (req, res) => {
   }
 });
 
-app.post('/api/broadcasts', async (req, res) => {
+app.post('/api/broadcasts', broadcastCreateBody, handleValidation, async (req, res) => {
   const user = await getUserFromToken(req, res);
   if (!user || !checkRole(user, ['admin'])) {
     return res.status(403).json({ error: 'Forbidden' });
@@ -158,9 +179,7 @@ app.post('/api/broadcasts', async (req, res) => {
     });
     res.status(response.status || 201).json(response.data);
   } catch (error) {
-    res.status(error.response?.status || 502).json({
-      error: error.response?.data?.error || error.message
-    });
+    forwardAxios(res, error, false);
   }
 });
 
@@ -193,14 +212,18 @@ app.get('/api/incidents/:id', async (req, res) => {
   res.json(response.data);
 });
 
-app.post('/api/incidents', async (req, res) => {
+app.post('/api/incidents', incidentCreateBody, handleValidation, async (req, res) => {
   const user = await getUserFromToken(req, res);
   if (!user) return;
-  const response = await axios.post(`${INCIDENT_URL}/incidents`, req.body);
-  res.json(response.data);
+  try {
+    const response = await axios.post(`${INCIDENT_URL}/incidents`, req.body);
+    res.json(response.data);
+  } catch (error) {
+    forwardAxios(res, error, false);
+  }
 });
 
-app.post('/api/incidents/:id/live-location', async (req, res) => {
+app.post('/api/incidents/:id/live-location', liveLocationBody, handleValidation, async (req, res) => {
   const user = await getUserFromToken(req, res);
   if (!user) return;
   try {
@@ -217,9 +240,7 @@ app.post('/api/incidents/:id/live-location', async (req, res) => {
     );
     res.json(response.data);
   } catch (error) {
-    res.status(error.response?.status || 502).json({
-      error: error.response?.data?.error || error.message
-    });
+    forwardAxios(res, error, false);
   }
 });
 
@@ -252,7 +273,7 @@ app.post('/api/incidents/:id/assignments/offer', async (req, res) => {
   }
 });
 
-app.post('/api/incidents/:id/assignments', async (req, res) => {
+app.post('/api/incidents/:id/assignments', staffAssignmentBody, handleValidation, async (req, res) => {
   const user = await getUserFromToken(req, res);
   if (!user || !checkRole(user, ['staff', 'admin'])) {
     return res.status(403).json({ error: 'Forbidden' });
@@ -264,13 +285,11 @@ app.post('/api/incidents/:id/assignments', async (req, res) => {
     );
     res.json(response.data);
   } catch (error) {
-    res.status(error.response?.status || 502).json({
-      error: error.response?.data?.error || error.message
-    });
+    forwardAxios(res, error, false);
   }
 });
 
-app.patch('/api/incidents/:id/assignments/:volunteerProfileId', async (req, res) => {
+app.patch('/api/incidents/:id/assignments/:volunteerProfileId', assignmentPatchBody, handleValidation, async (req, res) => {
   const user = await getUserFromToken(req, res);
   if (!user) return;
 
@@ -297,20 +316,22 @@ app.patch('/api/incidents/:id/assignments/:volunteerProfileId', async (req, res)
     );
     res.json(response.data);
   } catch (error) {
-    res.status(error.response?.status || 502).json({
-      error: error.response?.data?.error || error.message
-    });
+    forwardAxios(res, error, false);
   }
 });
 
-app.post('/api/incidents/:id/messages', async (req, res) => {
+app.post('/api/incidents/:id/messages', chatMessageBody, handleValidation, async (req, res) => {
   const user = await getUserFromToken(req, res);
   if (!user) return;
-  const response = await axios.post(`${INCIDENT_URL}/incidents/${req.params.id}/messages`, {
-    sender: user.username,
-    message: req.body.message
-  });
-  res.status(response.status).json(response.data);
+  try {
+    const response = await axios.post(`${INCIDENT_URL}/incidents/${req.params.id}/messages`, {
+      sender: user.username,
+      message: req.body.message
+    });
+    res.status(response.status).json(response.data);
+  } catch (error) {
+    forwardAxios(res, error, false);
+  }
 });
 
 app.put('/api/incidents/:id', async (req, res) => {
@@ -361,7 +382,7 @@ app.get('/api/volunteers/me/profile', async (req, res) => {
   }
 });
 
-app.post('/api/volunteers/register', async (req, res) => {
+app.post('/api/volunteers/register', volunteerRegisterBody, handleValidation, async (req, res) => {
   const user = await getUserFromToken(req, res);
   if (!user || !checkRole(user, ['volunteer'])) {
     return res.status(403).json({ error: 'Volunteer role required to register a responder profile' });
@@ -378,14 +399,11 @@ app.post('/api/volunteers/register', async (req, res) => {
     });
     res.status(response.status || 201).json(response.data);
   } catch (error) {
-    const status = error.response?.status || 502;
-    res.status(status).json({
-      error: error.response?.data?.error || error.message
-    });
+    forwardAxios(res, error, false);
   }
 });
 
-app.patch('/api/volunteers/:id/approval', async (req, res) => {
+app.patch('/api/volunteers/:id/approval', volunteerApprovalBody, handleValidation, async (req, res) => {
   const user = await getUserFromToken(req, res);
   if (!user || !checkRole(user, ['staff', 'admin'])) {
     return res.status(403).json({ error: 'Forbidden' });
@@ -394,9 +412,7 @@ app.patch('/api/volunteers/:id/approval', async (req, res) => {
     const response = await axios.patch(`${VOLUNTEER_URL}/volunteers/${req.params.id}/approval`, req.body);
     res.json(response.data);
   } catch (error) {
-    res.status(error.response?.status || 502).json({
-      error: error.response?.data?.error || error.message
-    });
+    forwardAxios(res, error, false);
   }
 });
 
@@ -465,13 +481,17 @@ app.get('/api/resources', async (req, res) => {
   res.json(response.data);
 });
 
-app.post('/api/resources', async (req, res) => {
+app.post('/api/resources', resourceCreateBody, handleValidation, async (req, res) => {
   const user = await getUserFromToken(req, res);
   if (!user || !checkRole(user, ['staff', 'admin'])) {
     return res.status(403).json({ error: 'Forbidden' });
   }
-  const response = await axios.post(`${RESOURCE_URL}/resources`, req.body);
-  res.json(response.data);
+  try {
+    const response = await axios.post(`${RESOURCE_URL}/resources`, req.body);
+    res.json(response.data);
+  } catch (error) {
+    forwardAxios(res, error, false);
+  }
 });
 
 app.put('/api/resources/:id', async (req, res) => {

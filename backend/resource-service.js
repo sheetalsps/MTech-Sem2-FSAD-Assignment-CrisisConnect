@@ -68,11 +68,23 @@ app.get('/resources/:id', async (req, res) => {
 
 app.post('/resources', async (req, res) => {
   try {
+    const category = String(req.body.category ?? '').trim();
+    const location = String(req.body.location ?? '').trim();
+    const quantity = req.body.quantity;
+    const d = [];
+    if (!category) d.push({ field: 'category', message: 'Category is required' });
+    if (!location) d.push({ field: 'location', message: 'Location is required' });
+    if (quantity === undefined || quantity === null || Number(quantity) < 0 || !Number.isInteger(Number(quantity))) {
+      d.push({ field: 'quantity', message: 'Quantity must be a non-negative integer' });
+    }
+    if (d.length) {
+      return res.status(400).json({ error: 'Validation failed', details: d });
+    }
     const resource = new Resource({
       resourceType: req.body.resourceType || 'general',
-      category: req.body.category,
-      quantity: req.body.quantity,
-      location: req.body.location,
+      category,
+      quantity: Number(quantity),
+      location,
       status: req.body.status || 'Available',
       description: req.body.description || '',
       wardType: req.body.wardType || '',

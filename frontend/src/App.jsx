@@ -26,10 +26,12 @@ function Dashboard() {
   const [volunteers, setVolunteers] = useState([]);
   const [resources, setResources] = useState([]);
   const [broadcasts, setBroadcasts] = useState([]);
+  const [loading, setLoading] = useState(true);
   const { user, hasRole } = useAuth();
 
   useEffect(() => {
     async function load() {
+      setLoading(true);
       try {
         const vol = await fetchVolunteers();
         setVolunteers(vol);
@@ -41,6 +43,7 @@ function Dashboard() {
         setIncidents([]);
         setResources([]);
         setBroadcasts([]);
+        setLoading(false);
         return;
       }
 
@@ -57,13 +60,15 @@ function Dashboard() {
         setIncidents([]);
         setResources([]);
         setBroadcasts([]);
+      } finally {
+        setLoading(false);
       }
     }
     load();
   }, [user]);
 
   return (
-    <div className="page">
+    <div className="page" aria-busy={loading}>
       <header className="hero hero-dashboard">
         <div>
           <h1>Operations dashboard</h1>
@@ -92,15 +97,15 @@ function Dashboard() {
         <div className="stats-grid">
           <article className="stat-card primary">
             <p className="stat-label">Live Incidents</p>
-            <h3>{user ? incidents.length : '—'}</h3>
+            <h3>{loading ? '…' : user ? incidents.length : '—'}</h3>
           </article>
           <article className="stat-card accent">
             <p className="stat-label">Available Resources</p>
-            <h3>{user ? resources.length : '—'}</h3>
+            <h3>{loading ? '…' : user ? resources.length : '—'}</h3>
           </article>
           <article className="stat-card secondary">
             <p className="stat-label">Volunteers Ready</p>
-            <h3>{volunteers.length}</h3>
+            <h3>{loading ? '…' : volunteers.length}</h3>
           </article>
         </div>
       </section>
@@ -266,6 +271,18 @@ function RequestForm() {
     event.preventDefault();
     if (!user) {
       setError('Please log in before submitting an SOS request.');
+      return;
+    }
+    if (!form.type.trim()) {
+      setError('Please enter an incident type.');
+      return;
+    }
+    if (!form.location.trim()) {
+      setError('Please enter a location.');
+      return;
+    }
+    if (!form.description.trim() || form.description.trim().length < 10) {
+      setError('Description must be at least 10 characters so responders have enough context.');
       return;
     }
 
