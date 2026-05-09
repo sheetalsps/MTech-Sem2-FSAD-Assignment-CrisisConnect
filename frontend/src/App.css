@@ -15,6 +15,7 @@
   --accent-soft: #d9f7f3;
   --danger: #ef4444;
   --warning: #f59e0b;
+  --success: #0f5132;
 }
 
 body {
@@ -212,6 +213,58 @@ button:hover {
   margin-top: 18px;
 }
 
+.hero-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.user-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.user-pill,
+.role-pill {
+  background: rgba(255, 255, 255, 0.14);
+  color: white;
+  padding: 10px 14px;
+  border-radius: 999px;
+  font-size: 0.92rem;
+}
+
+.text-button {
+  background: transparent;
+  color: white;
+  border: 1px solid rgba(255,255,255,0.3);
+  padding: 10px 18px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.auth-page {
+  padding-top: 0;
+}
+
+.auth-card {
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+.auth-footer {
+  margin-top: 18px;
+  color: var(--muted);
+}
+
+.notice-block {
+  display: grid;
+  gap: 18px;
+  padding: 24px;
+}
+
 .incident-manager,
 .resource-manager {
   display: grid;
@@ -237,15 +290,21 @@ button:hover {
 }
 
 .incident-grid,
-.resource-grid {
+.resource-grid,
+.admin-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 16px;
 }
 
 .incident-card,
-.resource-card {
+.resource-card,
+.admin-user-card {
   padding: 22px;
+}
+
+.admin-card {
+  padding: 24px;
 }
 
 .card-row {

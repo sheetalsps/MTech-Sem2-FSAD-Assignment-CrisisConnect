@@ -1,8 +1,13 @@
 import { Routes, Route, Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { fetchIncidents, fetchVolunteers, fetchResources, createIncident } from './services/api';
+import { AuthProvider, useAuth } from './AuthContext';
+import ProtectedRoute from './ProtectedRoute';
 import IncidentManager from './IncidentManager';
 import ResourceManager from './ResourceManager';
+import AdminDashboard from './AdminDashboard';
+import Login from './Login';
+import Signup from './Signup';
 
 function Dashboard() {
   const [incidents, setIncidents] = useState([]);
@@ -18,16 +23,37 @@ function Dashboard() {
     load();
   }, []);
 
+  const { user, logout, hasRole } = useAuth();
+
   return (
     <div className="page">
       <header className="hero">
         <div>
-          <h1>CrisisConnect</h1>
-          <p>Coordinate emergency resources, volunteers, and live help requests.</p>
+          <div className="hero-row">
+            <div>
+              <h1>CrisisConnect</h1>
+              <p>Coordinate emergency resources, volunteers, and live help requests.</p>
+            </div>
+            <div className="user-box">
+              {user ? (
+                <>
+                  <span className="user-pill">{user.username}</span>
+                  <span className="role-pill">{user.role}</span>
+                  <button className="text-button" onClick={logout}>Logout</button>
+                </>
+              ) : (
+                <>
+                  <Link className="button secondary" to="/login">Login</Link>
+                  <Link className="button" to="/signup">Signup</Link>
+                </>
+              )}
+            </div>
+          </div>
           <div className="header-actions">
             <Link className="button" to="/request">Submit SOS Request</Link>
-            <Link className="button secondary" to="/incidents">Manage Incidents</Link>
-            <Link className="button secondary" to="/resources">Manage Resources</Link>
+            {hasRole('staff', 'admin') && <Link className="button secondary" to="/incidents">Manage Incidents</Link>}
+            {hasRole('staff', 'admin') && <Link className="button secondary" to="/resources">Manage Resources</Link>}
+            {hasRole('admin') && <Link className="button secondary" to="/admin">Admin Users</Link>}
           </div>
         </div>
       </header>
@@ -55,7 +81,9 @@ function Dashboard() {
             <h2>Active Incidents</h2>
             <p>Prioritized emergency requests from the field.</p>
           </div>
-          <Link className="button small" to="/incidents">Manage Incidents</Link>
+          {hasRole('staff', 'admin') && (
+            <Link className="button small" to="/incidents">Manage Incidents</Link>
+          )}
         </div>
 
         <div className="card-grid">
@@ -86,7 +114,9 @@ function Dashboard() {
             <h2>Resource Inventory</h2>
             <p>Current supply status for urgent operations.</p>
           </div>
-          <Link className="button small secondary" to="/resources">Manage Resources</Link>
+          {hasRole('staff', 'admin') && (
+            <Link className="button small secondary" to="/resources">Manage Resources</Link>
+          )}
         </div>
 
         <div className="card-grid">
@@ -113,18 +143,30 @@ function Dashboard() {
 }
 
 function RequestForm() {
+  const { user } = useAuth();
   const [form, setForm] = useState({ type: '', location: '', description: '' });
   const [status, setStatus] = useState('');
+  const [error, setError] = useState('');
 
   const handleChange = (event) => {
     setForm({ ...form, [event.target.name]: event.target.value });
+    setError('');
   };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    const response = await createIncident(form);
-    setStatus(`SOS sent with priority: ${response.priority}`);
-    setForm({ type: '', location: '', description: '' });
+    if (!user) {
+      setError('Please log in before submitting an SOS request.');
+      return;
+    }
+
+    try {
+      const response = await createIncident(form);
+      setStatus(`SOS sent with priority: ${response.priority}`);
+      setForm({ type: '', location: '', description: '' });
+    } catch (err) {
+      setError(err.message || 'Unable to submit SOS.');
+    }
   };
 
   return (
@@ -138,22 +180,30 @@ function RequestForm() {
       </header>
 
       <main className="card form-card">
-        <form onSubmit={handleSubmit}>
-          <label>
-            Incident Type
-            <input name="type" value={form.type} onChange={handleChange} placeholder="Medical, Shelter, Food" required />
-          </label>
-          <label>
-            Location
-            <input name="location" value={form.location} onChange={handleChange} placeholder="Sector 12 or Main Road" required />
-          </label>
-          <label>
-            Description
-            <textarea name="description" value={form.description} onChange={handleChange} placeholder="Describe the emergency" required />
-          </label>
-          <button type="submit">Send SOS</button>
-        </form>
-        {status && <p className="notice">{status}</p>}
+        {!user ? (
+          <div className="notice-block">
+            <p className="notice">You must be logged in before submitting an SOS request.</p>
+            <Link className="button" to="/login">Login</Link>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit}>
+            <label>
+              Incident Type
+              <input name="type" value={form.type} onChange={handleChange} placeholder="Medical, Shelter, Food" required />
+            </label>
+            <label>
+              Location
+              <input name="location" value={form.location} onChange={handleChange} placeholder="Sector 12 or Main Road" required />
+            </label>
+            <label>
+              Description
+              <textarea name="description" value={form.description} onChange={handleChange} placeholder="Describe the emergency" required />
+            </label>
+            <button type="submit">Send SOS</button>
+            {error && <p className="error">{error}</p>}
+            {status && <p className="notice">{status}</p>}
+          </form>
+        )}
       </main>
     </div>
   );
@@ -161,12 +211,38 @@ function RequestForm() {
 
 function App() {
   return (
-    <Routes>
-      <Route path="/" element={<Dashboard />} />
-      <Route path="/request" element={<RequestForm />} />
-      <Route path="/incidents" element={<IncidentManager />} />
-      <Route path="/resources" element={<ResourceManager />} />
-    </Routes>
+    <AuthProvider>
+      <Routes>
+        <Route path="/" element={<Dashboard />} />
+        <Route path="/request" element={<RequestForm />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+        <Route
+          path="/incidents"
+          element={
+            <ProtectedRoute roles={[ 'staff', 'admin' ]}>
+              <IncidentManager />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/resources"
+          element={
+            <ProtectedRoute roles={[ 'staff', 'admin' ]}>
+              <ResourceManager />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute roles={[ 'admin' ]}>
+              <AdminDashboard />
+            </ProtectedRoute>
+          }
+        />
+      </Routes>
+    </AuthProvider>
   );
 }
 
