@@ -24,6 +24,32 @@ export function fetchResources() {
   return requestJson(`${GATEWAY}/resources`);
 }
 
+export function fetchResource(id) {
+  return requestJson(`${GATEWAY}/resources/${id}`);
+}
+
+export async function createResource(payload) {
+  return requestJson(`${GATEWAY}/resources`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+}
+
+export async function updateResource(id, payload) {
+  return requestJson(`${GATEWAY}/resources/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+}
+
+export async function deleteResource(id) {
+  return requestJson(`${GATEWAY}/resources/${id}`, {
+    method: 'DELETE'
+  });
+}
+
 export async function createIncident(payload) {
   const priorityResponse = await requestJson(`${GATEWAY}/priority`, {
     method: 'POST',

@@ -10,9 +10,9 @@ CrisisConnect connects emergency requests, volunteers, and resource availability
 
 - SOS request submission
 - Volunteer matching
-- Resource inventory
-- AI priority classification
+- Resource inventory management (CRUD operations)
 - Incident management (CRUD operations)
+- AI priority classification
 - API gateway with backend microservices
 
 ## Architecture
@@ -58,6 +58,13 @@ docker run -d -p 27017:27017 --name mongodb mongo:latest
 - `POST /api/incidents` - Create new incident
 - `PUT /api/incidents/:id` - Update incident
 - `DELETE /api/incidents/:id` - Delete incident
+
+### Resources
+- `GET /api/resources` - Get all resources
+- `GET /api/resources/:id` - Get resource by ID
+- `POST /api/resources` - Create new resource
+- `PUT /api/resources/:id` - Update resource
+- `DELETE /api/resources/:id` - Delete resource
 
 ## Notes
 

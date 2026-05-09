@@ -51,8 +51,23 @@ app.get('/api/resources', async (req, res) => {
   res.json(response.data);
 });
 
+app.get('/api/resources/:id', async (req, res) => {
+  const response = await axios.get(`${RESOURCE_URL}/resources/${req.params.id}`);
+  res.json(response.data);
+});
+
 app.post('/api/resources', async (req, res) => {
   const response = await axios.post(`${RESOURCE_URL}/resources`, req.body);
+  res.json(response.data);
+});
+
+app.put('/api/resources/:id', async (req, res) => {
+  const response = await axios.put(`${RESOURCE_URL}/resources/${req.params.id}`, req.body);
+  res.json(response.data);
+});
+
+app.delete('/api/resources/:id', async (req, res) => {
+  const response = await axios.delete(`${RESOURCE_URL}/resources/${req.params.id}`);
   res.json(response.data);
 });
 

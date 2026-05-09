@@ -2,6 +2,7 @@ import { Routes, Route, Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { fetchIncidents, fetchVolunteers, fetchResources, createIncident } from './services/api';
 import IncidentManager from './IncidentManager';
+import ResourceManager from './ResourceManager';
 
 function Dashboard() {
   const [incidents, setIncidents] = useState([]);
@@ -26,6 +27,7 @@ function Dashboard() {
           <div className="header-actions">
             <Link className="button" to="/request">Submit SOS Request</Link>
             <Link className="button secondary" to="/incidents">Manage Incidents</Link>
+            <Link className="button secondary" to="/resources">Manage Resources</Link>
           </div>
         </div>
       </header>
@@ -61,7 +63,7 @@ function Dashboard() {
             <h2>Resources</h2>
             <ul>
               {resources.map((resource) => (
-                <li key={resource.id}>
+                <li key={resource._id}>
                   {resource.category} ({resource.quantity}) — {resource.status}
                 </li>
               ))}
@@ -126,6 +128,7 @@ function App() {
       <Route path="/" element={<Dashboard />} />
       <Route path="/request" element={<RequestForm />} />
       <Route path="/incidents" element={<IncidentManager />} />
+      <Route path="/resources" element={<ResourceManager />} />
     </Routes>
   );
 }

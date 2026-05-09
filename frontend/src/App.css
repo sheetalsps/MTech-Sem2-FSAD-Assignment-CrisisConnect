@@ -218,8 +218,68 @@ button {
 .edit-btn:hover { background: #d97706; }
 .delete-btn:hover { background: #dc2626; }
 
+.resource-manager {
+  display: grid;
+  gap: 24px;
+  grid-template-columns: 1fr 2fr;
+}
+
+.resource-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.resource-item {
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px;
+  background: #f8fafc;
+}
+
+.resource-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+
+.resource-header h3 {
+  margin: 0;
+  color: #1e293b;
+}
+
+.resource-meta {
+  display: flex;
+  gap: 8px;
+}
+
+.quantity, .status {
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.quantity.low { background: #fee2e2; color: #dc2626; }
+.quantity.medium { background: #fef3c7; color: #92400e; }
+.quantity.high { background: #d1fae5; color: #065f46; }
+
+.status.available { background: #dbeafe; color: #1e40af; }
+.status.in-use { background: #fef3c7; color: #92400e; }
+.status.reserved { background: #e0e7ff; color: #5b21b6; }
+.status.depleted { background: #fee2e2; color: #dc2626; }
+
+.error {
+  color: #dc2626;
+  font-size: 0.875rem;
+  margin-top: 4px;
+  display: block;
+}
+
 @media (max-width: 1024px) {
-  .incident-manager {
+  .incident-manager, .resource-manager {
     grid-template-columns: 1fr;
   }
 
