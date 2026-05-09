@@ -19,13 +19,14 @@ import AnalyticsDashboard from './AnalyticsDashboard';
 import VolunteerPortal from './VolunteerPortal';
 import Login from './Login';
 import Signup from './Signup';
+import AppLayout from './components/AppLayout';
 
 function Dashboard() {
   const [incidents, setIncidents] = useState([]);
   const [volunteers, setVolunteers] = useState([]);
   const [resources, setResources] = useState([]);
   const [broadcasts, setBroadcasts] = useState([]);
-  const { user, logout, hasRole } = useAuth();
+  const { user, hasRole } = useAuth();
 
   useEffect(() => {
     async function load() {
@@ -63,39 +64,15 @@ function Dashboard() {
 
   return (
     <div className="page">
-      <header className="hero">
+      <header className="hero hero-dashboard">
         <div>
-          <div className="hero-row">
-            <div>
-              <h1>CrisisConnect</h1>
-              <p>Coordinate emergency resources, volunteers, and live help requests.</p>
-            </div>
-            <div className="user-box">
-              {user ? (
-                <>
-                  <span className="user-pill">{user.username}</span>
-                  <span className="role-pill">{user.role}</span>
-                  <button className="text-button" onClick={logout}>Logout</button>
-                </>
-              ) : (
-                <>
-                  <Link className="button secondary" to="/login">Login</Link>
-                  <Link className="button" to="/signup">Signup</Link>
-                </>
-              )}
-            </div>
-          </div>
-          <div className="header-actions">
-            <Link className="button" to="/request">Submit SOS Request</Link>
-            {user && <Link className="button secondary" to="/my-requests">My Requests</Link>}
-            {hasRole('volunteer') && <Link className="button secondary" to="/volunteer">Volunteer hub</Link>}
-            {hasRole('staff', 'admin') && <Link className="button secondary" to="/incidents">Manage Incidents</Link>}
-            {hasRole('staff', 'admin') && <Link className="button secondary" to="/resources">Manage Resources</Link>}
-            {hasRole('staff', 'admin') && <Link className="button secondary" to="/volunteers">Volunteers & approvals</Link>}
-            {(hasRole('staff', 'admin')) && (
-              <Link className="button secondary" to="/analytics">Analytics & broadcasts</Link>
+          <h1>Operations dashboard</h1>
+          <p>Coordinate emergency resources, volunteers, and live help requests. Use the menu above to move between sections.</p>
+          <div className="hero-quick-links">
+            <Link className="button" to="/request">Submit SOS</Link>
+            {user && (
+              <Link className="button secondary" to="/my-requests">My requests</Link>
             )}
-            {hasRole('admin') && <Link className="button secondary" to="/admin">Admin Users</Link>}
           </div>
         </div>
       </header>
@@ -215,7 +192,7 @@ function Dashboard() {
 
         <div className="card-grid">
           {volunteers.map((volunteer) => (
-            <article key={volunteer.id} className="data-card resource-card">
+            <article key={volunteer.id || volunteer._id} className="data-card resource-card">
               <div className="card-row">
                 <span className="pill type-pill">{volunteer.name}</span>
                 <span className={`pill status-pill ${volunteer.available ? 'available' : 'depleted'}`}>
@@ -366,74 +343,76 @@ function App() {
   return (
     <AuthProvider>
       <Routes>
-        <Route path="/" element={<Dashboard />} />
-        <Route path="/request" element={<RequestForm />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
-        <Route
-          path="/incidents"
-          element={
-            <ProtectedRoute roles={[ 'staff', 'admin' ]}>
-              <IncidentManager />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/incidents/:id"
-          element={
-            <ProtectedRoute>
-              <IncidentDetails />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/my-requests"
-          element={
-            <ProtectedRoute>
-              <MyRequests />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/resources"
-          element={
-            <ProtectedRoute roles={[ 'staff', 'admin' ]}>
-              <ResourceManager />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/volunteers"
-          element={
-            <ProtectedRoute roles={[ 'staff', 'admin' ]}>
-              <VolunteerManager />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin"
-          element={
-            <ProtectedRoute roles={[ 'admin' ]}>
-              <AdminDashboard />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/analytics"
-          element={
-            <ProtectedRoute roles={[ 'staff', 'admin' ]}>
-              <AnalyticsDashboard />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/volunteer"
-          element={
-            <ProtectedRoute roles={[ 'volunteer' ]}>
-              <VolunteerPortal />
-            </ProtectedRoute>
-          }
-        />
+        <Route element={<AppLayout />}>
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/request" element={<RequestForm />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
+          <Route
+            path="/incidents"
+            element={
+              <ProtectedRoute roles={[ 'staff', 'admin' ]}>
+                <IncidentManager />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/incidents/:id"
+            element={
+              <ProtectedRoute>
+                <IncidentDetails />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/my-requests"
+            element={
+              <ProtectedRoute>
+                <MyRequests />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/resources"
+            element={
+              <ProtectedRoute roles={[ 'staff', 'admin' ]}>
+                <ResourceManager />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/volunteers"
+            element={
+              <ProtectedRoute roles={[ 'staff', 'admin' ]}>
+                <VolunteerManager />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute roles={[ 'admin' ]}>
+                <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/analytics"
+            element={
+              <ProtectedRoute roles={[ 'staff', 'admin' ]}>
+                <AnalyticsDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/volunteer"
+            element={
+              <ProtectedRoute roles={[ 'volunteer' ]}>
+                <VolunteerPortal />
+              </ProtectedRoute>
+            }
+          />
+        </Route>
       </Routes>
     </AuthProvider>
   );
