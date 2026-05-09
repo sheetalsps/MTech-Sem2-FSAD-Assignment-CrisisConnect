@@ -5,10 +5,13 @@ const axios = require('axios');
 const cors = require('cors');
 const yaml = require('js-yaml');
 const swaggerUi = require('swagger-ui-express');
+const { attachPrometheus } = require('./prometheus-metrics');
 
 const app = express();
 app.use(cors());
 app.use(express.json({ limit: '32mb' }));
+
+attachPrometheus(app);
 
 const openapiSpec = yaml.load(
   fs.readFileSync(path.join(__dirname, 'openapi.yaml'), 'utf8')
@@ -531,4 +534,5 @@ app.listen(4000, () => {
   console.log('API Gateway running on http://localhost:4000');
   console.log('Swagger UI: http://localhost:4000/api-docs');
   console.log('OpenAPI YAML: http://localhost:4000/openapi.yaml');
+  console.log('Prometheus metrics: http://localhost:4000/metrics');
 });

@@ -1,0 +1,14 @@
+# Prometheus scrape configuration for CrisisConnect (gateway exposes /metrics)
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: crisisconnect-gateway
+    metrics_path: /metrics
+    static_configs:
+      # API gateway must be reachable from the Prometheus container.
+      # Docker Desktop (Windows/Mac): host.docker.internal forwards to the host.
+      # Linux: ensure extra_hosts (host-gateway) is set in docker-compose.
+      - targets:
+          - host.docker.internal:4000

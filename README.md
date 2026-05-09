@@ -36,13 +36,14 @@ CrisisConnect is a React single-page application backed by a Node.js **API gatew
 
 - Keyword-based **priority** suggestion (“AI” classification service).
 - **Swagger / OpenAPI** documentation served by the gateway.
+- **Prometheus** metrics on **`GET /metrics`** (gateway) and optional **Grafana** dashboards via Docker ([monitoring/README.md](monitoring/README.md)).
 
 ## Architecture
 
 | Layer | Location | Notes |
 |--------|-----------|--------|
 | Frontend | `frontend/` | React (Vite), dev server default port **5173** |
-| API gateway | `backend/gateway-service.js` | Port **4000**, JWT verification, routing, **Swagger UI** |
+| API gateway | `backend/gateway-service.js` | Port **4000**, JWT verification, routing, **Swagger UI**, **`/metrics`** (Prometheus) |
 | Incident service | `backend/incident-service.js` | Port **5001**, incidents, broadcasts, analytics summary |
 | Volunteer service | `backend/volunteer-service.js` | Port **5002**, volunteer profiles (MongoDB) |
 | Resource service | `backend/resource-service.js` | Port **5003**, resource inventory |
@@ -101,6 +102,22 @@ With the API gateway running on port **4000**, interactive docs and the machine-
 - **OpenAPI YAML (HTTP):** [http://localhost:4000/openapi.yaml](http://localhost:4000/openapi.yaml)
 
 The same specification is checked into the repo at [`backend/openapi.yaml`](backend/openapi.yaml). In Swagger UI, open **Authorize** and paste a token from `POST /api/auth/login` or `POST /api/auth/signup` (Bearer auth is applied automatically).
+
+## Monitoring (Grafana + Prometheus)
+
+The gateway exposes Prometheus-format metrics at **`http://localhost:4000/metrics`** (`gateway_*` metric prefix).
+
+1. Run CrisisConnect so the gateway is on port **4000**.
+2. Start the monitoring stack from the repo root (requires [Docker](https://docs.docker.com/get-docker/)):
+
+   ```bash
+   docker compose -f docker-compose.monitoring.yml up -d
+   ```
+
+3. **Grafana:** [http://localhost:3001](http://localhost:3001) — default login **`admin` / `admin`** (you will be prompted to rotate the password). The dashboard **CrisisConnect API Gateway** is provisioned automatically.
+4. **Prometheus:** [http://localhost:9090](http://localhost:9090) — verify **Status → Targets** shows `crisisconnect-gateway` as **UP**.
+
+Details, scrape configuration, and troubleshooting: [**monitoring/README.md**](monitoring/README.md).
 
 ## API surface (summary)
 
