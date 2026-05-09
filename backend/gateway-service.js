@@ -115,8 +115,37 @@ app.get('/api/volunteers', async (req, res) => {
   res.json(response.data);
 });
 
+app.get('/api/volunteers/:id', async (req, res) => {
+  const user = await getUserFromToken(req, res);
+  if (!user) return;
+  const response = await axios.get(`${VOLUNTEER_URL}/volunteers/${req.params.id}`);
+  res.json(response.data);
+});
+
 app.post('/api/volunteers', async (req, res) => {
+  const user = await getUserFromToken(req, res);
+  if (!user || !checkRole(user, ['staff', 'admin'])) {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
   const response = await axios.post(`${VOLUNTEER_URL}/volunteers`, req.body);
+  res.json(response.data);
+});
+
+app.put('/api/volunteers/:id', async (req, res) => {
+  const user = await getUserFromToken(req, res);
+  if (!user || !checkRole(user, ['staff', 'admin'])) {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+  const response = await axios.put(`${VOLUNTEER_URL}/volunteers/${req.params.id}`, req.body);
+  res.json(response.data);
+});
+
+app.delete('/api/volunteers/:id', async (req, res) => {
+  const user = await getUserFromToken(req, res);
+  if (!user || !checkRole(user, ['staff', 'admin'])) {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+  const response = await axios.delete(`${VOLUNTEER_URL}/volunteers/${req.params.id}`);
   res.json(response.data);
 });
 

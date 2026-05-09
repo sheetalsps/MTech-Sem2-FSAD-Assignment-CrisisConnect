@@ -32,6 +32,41 @@ app.post('/volunteers', (req, res) => {
   res.status(201).json(volunteer);
 });
 
+app.get('/volunteers/:id', (req, res) => {
+  const volunteer = volunteers.find((item) => item.id === req.params.id);
+  if (!volunteer) {
+    return res.status(404).json({ error: 'Volunteer not found' });
+  }
+  res.json(volunteer);
+});
+
+app.put('/volunteers/:id', (req, res) => {
+  const index = volunteers.findIndex((item) => item.id === req.params.id);
+  if (index === -1) {
+    return res.status(404).json({ error: 'Volunteer not found' });
+  }
+
+  const updatedVolunteer = {
+    ...volunteers[index],
+    name: req.body.name ?? volunteers[index].name,
+    skills: Array.isArray(req.body.skills) ? req.body.skills : volunteers[index].skills,
+    location: req.body.location ?? volunteers[index].location,
+    available: req.body.available ?? volunteers[index].available
+  };
+
+  volunteers[index] = updatedVolunteer;
+  res.json(updatedVolunteer);
+});
+
+app.delete('/volunteers/:id', (req, res) => {
+  const index = volunteers.findIndex((item) => item.id === req.params.id);
+  if (index === -1) {
+    return res.status(404).json({ error: 'Volunteer not found' });
+  }
+  volunteers.splice(index, 1);
+  res.json({ message: 'Volunteer deleted successfully' });
+});
+
 app.listen(5002, () => {
   console.log('Volunteer Service running on http://localhost:5002');
 });

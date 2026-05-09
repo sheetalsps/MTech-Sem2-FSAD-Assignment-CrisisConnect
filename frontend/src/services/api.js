@@ -41,6 +41,32 @@ export function fetchVolunteers() {
   return requestJson(`${GATEWAY}/volunteers`);
 }
 
+export function fetchVolunteer(id) {
+  return requestJson(`${GATEWAY}/volunteers/${id}`);
+}
+
+export async function createVolunteer(payload) {
+  return requestJson(`${GATEWAY}/volunteers`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+}
+
+export async function updateVolunteer(id, payload) {
+  return requestJson(`${GATEWAY}/volunteers/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+}
+
+export async function deleteVolunteer(id) {
+  return requestJson(`${GATEWAY}/volunteers/${id}`, {
+    method: 'DELETE'
+  });
+}
+
 export function fetchResources() {
   return requestJson(`${GATEWAY}/resources`);
 }

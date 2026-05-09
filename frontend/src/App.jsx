@@ -5,6 +5,7 @@ import { AuthProvider, useAuth } from './AuthContext';
 import ProtectedRoute from './ProtectedRoute';
 import IncidentManager from './IncidentManager';
 import ResourceManager from './ResourceManager';
+import VolunteerManager from './VolunteerManager';
 import AdminDashboard from './AdminDashboard';
 import Login from './Login';
 import Signup from './Signup';
@@ -53,6 +54,7 @@ function Dashboard() {
             <Link className="button" to="/request">Submit SOS Request</Link>
             {hasRole('staff', 'admin') && <Link className="button secondary" to="/incidents">Manage Incidents</Link>}
             {hasRole('staff', 'admin') && <Link className="button secondary" to="/resources">Manage Resources</Link>}
+            {hasRole('staff', 'admin') && <Link className="button secondary" to="/volunteers">Manage Volunteers</Link>}
             {hasRole('admin') && <Link className="button secondary" to="/admin">Admin Users</Link>}
           </div>
         </div>
@@ -134,6 +136,33 @@ function Dashboard() {
                 <span className="quantity-chip">Qty: {resource.quantity}</span>
                 <span className="card-meta">Updated {new Date(resource.updatedAt).toLocaleDateString()}</span>
               </div>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="section-panel">
+        <div className="section-header">
+          <div>
+            <h2>Volunteer Roster</h2>
+            <p>Active team members available for on-the-ground response.</p>
+          </div>
+          {hasRole('staff', 'admin') && (
+            <Link className="button small" to="/volunteers">Manage Volunteers</Link>
+          )}
+        </div>
+
+        <div className="card-grid">
+          {volunteers.map((volunteer) => (
+            <article key={volunteer.id} className="data-card resource-card">
+              <div className="card-row">
+                <span className="pill type-pill">{volunteer.name}</span>
+                <span className={`pill status-pill ${volunteer.available ? 'available' : 'depleted'}`}>
+                  {volunteer.available ? 'Available' : 'Unavailable'}
+                </span>
+              </div>
+              <h3>{volunteer.location}</h3>
+              <p>{(volunteer.skills || []).join(', ') || 'No skills listed.'}</p>
             </article>
           ))}
         </div>
@@ -230,6 +259,14 @@ function App() {
           element={
             <ProtectedRoute roles={[ 'staff', 'admin' ]}>
               <ResourceManager />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/volunteers"
+          element={
+            <ProtectedRoute roles={[ 'staff', 'admin' ]}>
+              <VolunteerManager />
             </ProtectedRoute>
           }
         />
