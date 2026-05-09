@@ -22,9 +22,22 @@ mongoose.connect('mongodb://localhost:27017/crisisconnect')
 const incidentSchema = new mongoose.Schema({
   type: { type: String, required: true, default: 'General' },
   location: { type: String, required: true, default: 'Unknown' },
+  latitude: { type: Number },
+  longitude: { type: Number },
   description: { type: String, default: '' },
   priority: { type: String, enum: ['Low', 'Medium', 'High', 'Critical'], default: 'Medium' },
   status: { type: String, enum: ['Open', 'In Progress', 'Resolved', 'Closed'], default: 'Open' },
+  requester: { type: String, default: 'Anonymous' },
+  media: [{
+    name: String,
+    type: String,
+    data: String
+  }],
+  chat: [{
+    sender: String,
+    message: String,
+    createdAt: { type: Date, default: Date.now }
+  }],
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });
@@ -34,7 +47,11 @@ const Incident = mongoose.model('Incident', incidentSchema);
 // Routes
 app.get('/incidents', async (req, res) => {
   try {
-    const incidents = await Incident.find();
+    const filter = {};
+    if (req.query.requester) {
+      filter.requester = req.query.requester;
+    }
+    const incidents = await Incident.find(filter);
     res.json(incidents);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -58,12 +75,40 @@ app.post('/incidents', async (req, res) => {
     const incident = new Incident({
       type: req.body.type || 'General',
       location: req.body.location || 'Unknown',
+      latitude: req.body.latitude,
+      longitude: req.body.longitude,
       description: req.body.description || '',
       priority: req.body.priority || 'Medium',
-      status: 'Open'
+      status: 'Open',
+      requester: req.body.requester || 'Anonymous',
+      media: Array.isArray(req.body.media) ? req.body.media : [],
+      chat: []
     });
     const savedIncident = await incident.save();
     res.status(201).json(savedIncident);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+app.post('/incidents/:id/messages', async (req, res) => {
+  try {
+    const incident = await Incident.findById(req.params.id);
+    if (!incident) {
+      return res.status(404).json({ error: 'Incident not found' });
+    }
+
+    const message = {
+      sender: req.body.sender || 'Citizen',
+      message: req.body.message || '',
+      createdAt: Date.now()
+    };
+
+    incident.chat.push(message);
+    incident.updatedAt = Date.now();
+    await incident.save();
+
+    res.status(201).json(message);
   } catch (error) {
     res.status(400).json({ error: error.message });
   }

@@ -4,6 +4,8 @@ import { fetchIncidents, fetchVolunteers, fetchResources, createIncident } from 
 import { AuthProvider, useAuth } from './AuthContext';
 import ProtectedRoute from './ProtectedRoute';
 import IncidentManager from './IncidentManager';
+import IncidentDetails from './IncidentDetails';
+import MyRequests from './MyRequests';
 import ResourceManager from './ResourceManager';
 import VolunteerManager from './VolunteerManager';
 import AdminDashboard from './AdminDashboard';
@@ -52,6 +54,7 @@ function Dashboard() {
           </div>
           <div className="header-actions">
             <Link className="button" to="/request">Submit SOS Request</Link>
+            {user && <Link className="button secondary" to="/my-requests">My Requests</Link>}
             {hasRole('staff', 'admin') && <Link className="button secondary" to="/incidents">Manage Incidents</Link>}
             {hasRole('staff', 'admin') && <Link className="button secondary" to="/resources">Manage Resources</Link>}
             {hasRole('staff', 'admin') && <Link className="button secondary" to="/volunteers">Manage Volunteers</Link>}
@@ -105,6 +108,11 @@ function Dashboard() {
                 </span>
                 <span className="card-meta">Created {new Date(incident.createdAt).toLocaleDateString()}</span>
               </div>
+              {user && (
+                <Link className="button small secondary" to={`/incidents/${incident._id}`}>
+                  Track Request
+                </Link>
+              )}
             </article>
           ))}
         </div>
@@ -173,13 +181,55 @@ function Dashboard() {
 
 function RequestForm() {
   const { user } = useAuth();
-  const [form, setForm] = useState({ type: '', location: '', description: '' });
+  const [form, setForm] = useState({
+    type: '',
+    location: '',
+    latitude: '',
+    longitude: '',
+    description: '',
+    media: []
+  });
+  const [fileNames, setFileNames] = useState([]);
   const [status, setStatus] = useState('');
   const [error, setError] = useState('');
 
   const handleChange = (event) => {
-    setForm({ ...form, [event.target.name]: event.target.value });
+    const { name, value, type, checked } = event.target;
+    setForm({ ...form, [name]: type === 'checkbox' ? checked : value });
     setError('');
+  };
+
+  const handleMediaChange = async (event) => {
+    const selectedFiles = Array.from(event.target.files || []);
+    const media = await Promise.all(selectedFiles.map((file) => new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve({ name: file.name, type: file.type, data: reader.result });
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    })));
+    setForm({ ...form, media });
+    setFileNames(selectedFiles.map((file) => file.name));
+    setError('');
+  };
+
+  const shareCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      setError('Geolocation is not supported by your browser.');
+      return;
+    }
+    setError('');
+    navigator.geolocation.getCurrentPosition((position) => {
+      const { latitude, longitude } = position.coords;
+      setForm({
+        ...form,
+        latitude,
+        longitude,
+        location: `Lat ${latitude.toFixed(4)}, Lon ${longitude.toFixed(4)}`
+      });
+      setStatus('Live location attached to the request.');
+    }, () => {
+      setError('Unable to access your location. Please allow location permissions.');
+    });
   };
 
   const handleSubmit = async (event) => {
@@ -190,9 +240,10 @@ function RequestForm() {
     }
 
     try {
-      const response = await createIncident(form);
+      const response = await createIncident({ ...form, requester: user.username });
       setStatus(`SOS sent with priority: ${response.priority}`);
-      setForm({ type: '', location: '', description: '' });
+      setForm({ type: '', location: '', latitude: '', longitude: '', description: '', media: [] });
+      setFileNames([]);
     } catch (err) {
       setError(err.message || 'Unable to submit SOS.');
     }
@@ -222,12 +273,32 @@ function RequestForm() {
             </label>
             <label>
               Location
-              <input name="location" value={form.location} onChange={handleChange} placeholder="Sector 12 or Main Road" required />
+              <div className="location-row">
+                <input name="location" value={form.location} onChange={handleChange} placeholder="Sector 12 or Main Road" required />
+                <button type="button" className="button secondary small" onClick={shareCurrentLocation}>
+                  Use Current Location
+                </button>
+              </div>
             </label>
             <label>
               Description
               <textarea name="description" value={form.description} onChange={handleChange} placeholder="Describe the emergency" required />
             </label>
+            <label>
+              Attach images/videos
+              <input
+                type="file"
+                accept="image/*,video/*"
+                multiple
+                onChange={handleMediaChange}
+              />
+            </label>
+            {fileNames.length > 0 && (
+              <div className="file-list">
+                <strong>Attached files:</strong>
+                <ul>{fileNames.map((name) => <li key={name}>{name}</li>)}</ul>
+              </div>
+            )}
             <button type="submit">Send SOS</button>
             {error && <p className="error">{error}</p>}
             {status && <p className="notice">{status}</p>}
@@ -251,6 +322,22 @@ function App() {
           element={
             <ProtectedRoute roles={[ 'staff', 'admin' ]}>
               <IncidentManager />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/incidents/:id"
+          element={
+            <ProtectedRoute>
+              <IncidentDetails />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/my-requests"
+          element={
+            <ProtectedRoute>
+              <MyRequests />
             </ProtectedRoute>
           }
         />

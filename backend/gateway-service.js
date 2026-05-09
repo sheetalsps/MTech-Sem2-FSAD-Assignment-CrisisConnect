@@ -92,6 +92,16 @@ app.post('/api/incidents', async (req, res) => {
   res.json(response.data);
 });
 
+app.post('/api/incidents/:id/messages', async (req, res) => {
+  const user = await getUserFromToken(req, res);
+  if (!user) return;
+  const response = await axios.post(`${INCIDENT_URL}/incidents/${req.params.id}/messages`, {
+    sender: user.username,
+    message: req.body.message
+  });
+  res.status(response.status).json(response.data);
+});
+
 app.put('/api/incidents/:id', async (req, res) => {
   const user = await getUserFromToken(req, res);
   if (!user || !checkRole(user, ['staff', 'admin'])) {
@@ -112,6 +122,15 @@ app.delete('/api/incidents/:id', async (req, res) => {
 
 app.get('/api/volunteers', async (req, res) => {
   const response = await axios.get(`${VOLUNTEER_URL}/volunteers`);
+  res.json(response.data);
+});
+
+app.get('/api/my-requests', async (req, res) => {
+  const user = await getUserFromToken(req, res);
+  if (!user) return;
+  const response = await axios.get(`${INCIDENT_URL}/incidents`, {
+    params: { requester: user.username }
+  });
   res.json(response.data);
 });
 

@@ -33,6 +33,10 @@ export function fetchIncidents() {
   return requestJson(`${GATEWAY}/incidents`);
 }
 
+export function fetchMyRequests() {
+  return requestJson(`${GATEWAY}/my-requests`);
+}
+
 export function fetchIncident(id) {
   return requestJson(`${GATEWAY}/incidents/${id}`);
 }
@@ -108,6 +112,14 @@ export async function createIncident(payload) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ ...payload, priority: priorityResponse.priority })
+  });
+}
+
+export async function sendIncidentMessage(id, message) {
+  return requestJson(`${GATEWAY}/incidents/${id}/messages`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message })
   });
 }
 
