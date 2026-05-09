@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { fetchResources, createResource, updateResource, deleteResource } from './services/api';
 import { log } from './logger';
+import CrudListFilters from './components/CrudListFilters';
 
 function ResourceManager() {
   const [resources, setResources] = useState([]);
@@ -20,6 +21,20 @@ function ResourceManager() {
   });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterStatus, setFilterStatus] = useState('');
+  const [filterResourceType, setFilterResourceType] = useState('');
+
+  const filteredResources = useMemo(() => {
+    return resources.filter((r) => {
+      if (filterStatus && r.status !== filterStatus) return false;
+      if (filterResourceType && (r.resourceType || 'general') !== filterResourceType) return false;
+      if (!searchQuery.trim()) return true;
+      const q = searchQuery.trim().toLowerCase();
+      const blob = `${r.category} ${r.location} ${r.description || ''}`.toLowerCase();
+      return blob.includes(q);
+    });
+  }, [resources, searchQuery, filterStatus, filterResourceType]);
 
   useEffect(() => {
     loadResources();
@@ -269,10 +284,53 @@ function ResourceManager() {
 
         <div className="list-section">
           <div className="card">
-            <h2>All Resources ({resources.length})</h2>
+            <h2>
+              Resources ({filteredResources.length}
+              {filteredResources.length !== resources.length ? ` of ${resources.length}` : ''})
+            </h2>
+            <CrudListFilters
+              meta={
+                loading
+                  ? 'Loading…'
+                  : `${filteredResources.length} match${filteredResources.length === 1 ? '' : 'es'}`
+              }
+            >
+              <label className="equipment-filter-field">
+                <span className="filter-label">Search</span>
+                <input
+                  type="search"
+                  placeholder="Category, location, description…"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  aria-label="Search resources"
+                />
+              </label>
+              <label className="equipment-filter-field">
+                <span className="filter-label">Type</span>
+                <select
+                  value={filterResourceType}
+                  onChange={(e) => setFilterResourceType(e.target.value)}
+                >
+                  <option value="">All types</option>
+                  <option value="general">General</option>
+                  <option value="hospital_bed">Hospital bed</option>
+                  <option value="blood_request">Blood request</option>
+                </select>
+              </label>
+              <label className="equipment-filter-field">
+                <span className="filter-label">Status</span>
+                <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
+                  <option value="">All statuses</option>
+                  <option value="Available">Available</option>
+                  <option value="In Use">In use</option>
+                  <option value="Reserved">Reserved</option>
+                  <option value="Depleted">Depleted</option>
+                </select>
+              </label>
+            </CrudListFilters>
             {loading && <p>Loading...</p>}
             <div className="resource-grid">
-              {resources.map((resource) => (
+              {filteredResources.map((resource) => (
                 <article key={resource._id} className="resource-card">
                   <div className="card-row">
                     <span className="pill resource-pill">
@@ -299,6 +357,11 @@ function ResourceManager() {
                   </div>
                 </article>
               ))}
+              {!loading && filteredResources.length === 0 && resources.length > 0 && (
+                <p className="notice" style={{ gridColumn: '1 / -1' }}>
+                  No resources match the current filters.
+                </p>
+              )}
             </div>
           </div>
         </div>

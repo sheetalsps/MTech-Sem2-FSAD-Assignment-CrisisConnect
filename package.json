@@ -6,6 +6,7 @@
     "frontend"
   ],
   "scripts": {
+    "deliverables:doc": "node scripts/generate-deliverables-doc.mjs",
     "install:all": "npm install --prefix backend && npm install --prefix frontend",
     "start:backend": "npx concurrently \"npm --prefix backend run start:incident\" \"npm --prefix backend run start:volunteer\" \"npm --prefix backend run start:resource\" \"npm --prefix backend run start:priority\" \"npm --prefix backend run start:auth\" \"npm --prefix backend run start\"",
     "start:frontend": "npm run dev --prefix frontend",
@@ -14,6 +15,7 @@
     "monitoring:down": "docker compose -f docker-compose.monitoring.yml down"
   },
   "devDependencies": {
-    "concurrently": "^8.2.2"
+    "concurrently": "^8.2.2",
+    "docx": "^8.5.0"
   }
 }

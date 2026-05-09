@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   fetchAnalyticsSummary,
@@ -6,6 +6,7 @@ import {
   createBroadcast
 } from './services/api';
 import { useAuth } from './AuthContext';
+import CrudListFilters from './components/CrudListFilters';
 
 export default function AnalyticsDashboard() {
   const { user } = useAuth();
@@ -14,6 +15,17 @@ export default function AnalyticsDashboard() {
   const [form, setForm] = useState({ title: '', message: '', severity: 'warning' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [broadcastSearch, setBroadcastSearch] = useState('');
+  const [filterSeverity, setFilterSeverity] = useState('');
+
+  const filteredBroadcasts = useMemo(() => {
+    return broadcasts.filter((b) => {
+      if (filterSeverity && b.severity !== filterSeverity) return false;
+      if (!broadcastSearch.trim()) return true;
+      const q = broadcastSearch.trim().toLowerCase();
+      return `${b.title} ${b.message} ${b.createdBy || ''}`.toLowerCase().includes(q);
+    });
+  }, [broadcasts, broadcastSearch, filterSeverity]);
 
   const load = async () => {
     setLoading(true);
@@ -166,9 +178,42 @@ export default function AnalyticsDashboard() {
       )}
 
       <section className="section-panel">
-        <h2>Recent broadcasts</h2>
+        <div className="section-header">
+          <div>
+            <h2>
+              Recent broadcasts ({filteredBroadcasts.length}
+              {filteredBroadcasts.length !== broadcasts.length ? ` of ${broadcasts.length}` : ''})
+            </h2>
+            <p>Filter by text or severity. Create new alerts above (admin).</p>
+          </div>
+        </div>
+        <CrudListFilters
+          meta={
+            `${filteredBroadcasts.length} shown`
+          }
+        >
+          <label className="equipment-filter-field">
+            <span className="filter-label">Search</span>
+            <input
+              type="search"
+              placeholder="Title, message, author…"
+              value={broadcastSearch}
+              onChange={(e) => setBroadcastSearch(e.target.value)}
+              aria-label="Search broadcasts"
+            />
+          </label>
+          <label className="equipment-filter-field">
+            <span className="filter-label">Severity</span>
+            <select value={filterSeverity} onChange={(e) => setFilterSeverity(e.target.value)}>
+              <option value="">All</option>
+              <option value="info">Info</option>
+              <option value="warning">Warning</option>
+              <option value="critical">Critical</option>
+            </select>
+          </label>
+        </CrudListFilters>
         <div className="broadcast-list">
-          {broadcasts.map((b) => (
+          {filteredBroadcasts.map((b) => (
             <article key={b._id} className={`broadcast-item severity-${b.severity}`}>
               <div className="card-row">
                 <strong>{b.title}</strong>
@@ -181,6 +226,9 @@ export default function AnalyticsDashboard() {
             </article>
           ))}
           {!broadcasts.length && <p className="notice">No broadcasts yet.</p>}
+          {broadcasts.length > 0 && filteredBroadcasts.length === 0 && (
+            <p className="notice">No broadcasts match the current filters.</p>
+          )}
         </div>
       </section>
     </div>

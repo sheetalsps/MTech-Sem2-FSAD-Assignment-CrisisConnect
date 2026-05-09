@@ -56,9 +56,14 @@ export default function AppLayout() {
                 SOS request
               </NavLink>
               {user && (
-                <NavLink to="/my-requests" className={navLinkClass}>
-                  My requests
-                </NavLink>
+                <>
+                  <NavLink to="/equipment" className={navLinkClass}>
+                    Equipment
+                  </NavLink>
+                  <NavLink to="/my-requests" className={navLinkClass}>
+                    My requests
+                  </NavLink>
+                </>
               )}
               {hasRole('volunteer') && (
                 <NavLink to="/volunteer" className={navLinkClass}>

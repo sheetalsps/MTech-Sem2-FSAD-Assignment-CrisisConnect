@@ -763,6 +763,18 @@ paths:
       summary: List resources
       security:
         - bearerAuth: []
+      parameters:
+        - name: category
+          in: query
+          description: Case-insensitive substring match on category name
+          schema:
+            type: string
+        - name: status
+          in: query
+          description: Filter by availability status
+          schema:
+            type: string
+            enum: [Available, In Use, Depleted, Reserved]
       responses:
         '200':
           description: Resource array

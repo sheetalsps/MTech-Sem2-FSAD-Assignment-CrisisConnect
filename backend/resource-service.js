@@ -46,10 +46,24 @@ const resourceSchema = new mongoose.Schema({
 
 const Resource = mongoose.model('Resource', resourceSchema);
 
+function escapeRegex(s) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 // Routes
 app.get('/resources', async (req, res) => {
   try {
-    const resources = await Resource.find();
+    const filter = {};
+    const allowedStatus = ['Available', 'In Use', 'Depleted', 'Reserved'];
+    const status = typeof req.query.status === 'string' ? req.query.status.trim() : '';
+    if (status && allowedStatus.includes(status)) {
+      filter.status = status;
+    }
+    const cat = typeof req.query.category === 'string' ? req.query.category.trim() : '';
+    if (cat) {
+      filter.category = { $regex: escapeRegex(cat), $options: 'i' };
+    }
+    const resources = await Resource.find(filter).sort({ updatedAt: -1 });
     res.json(resources);
   } catch (error) {
     res.status(500).json({ error: error.message });

@@ -17,6 +17,7 @@ import VolunteerManager from './VolunteerManager';
 import AdminDashboard from './AdminDashboard';
 import AnalyticsDashboard from './AnalyticsDashboard';
 import VolunteerPortal from './VolunteerPortal';
+import EquipmentDashboard from './EquipmentDashboard';
 import Login from './Login';
 import Signup from './Signup';
 import AppLayout from './components/AppLayout';
@@ -76,7 +77,10 @@ function Dashboard() {
           <div className="hero-quick-links">
             <Link className="button" to="/request">Submit SOS</Link>
             {user && (
-              <Link className="button secondary" to="/my-requests">My requests</Link>
+              <>
+                <Link className="button secondary" to="/equipment">Equipment listing</Link>
+                <Link className="button secondary" to="/my-requests">My requests</Link>
+              </>
             )}
           </div>
         </div>
@@ -158,9 +162,16 @@ function Dashboard() {
             <h2>Resource Inventory</h2>
             <p>Current supply status for urgent operations.</p>
           </div>
-          {hasRole('staff', 'admin') && (
-            <Link className="button small" to="/resources">Manage Resources</Link>
-          )}
+          <div className="section-header-actions">
+            {user && (
+              <Link className="button small secondary" to="/equipment">
+                Equipment listing &amp; search
+              </Link>
+            )}
+            {hasRole('staff', 'admin') && (
+              <Link className="button small" to="/resources">Manage Resources</Link>
+            )}
+          </div>
         </div>
 
         <div className="card-grid">
@@ -386,6 +397,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <MyRequests />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/equipment"
+            element={
+              <ProtectedRoute>
+                <EquipmentDashboard />
               </ProtectedRoute>
             }
           />

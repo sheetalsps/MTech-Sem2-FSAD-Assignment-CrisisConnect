@@ -1,11 +1,23 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { fetchUsers, updateUserRole, deleteUser } from './services/api';
+import CrudListFilters from './components/CrudListFilters';
 
 function AdminDashboard() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterRole, setFilterRole] = useState('');
+
+  const filteredUsers = useMemo(() => {
+    return users.filter((u) => {
+      if (filterRole && u.role !== filterRole) return false;
+      if (!searchQuery.trim()) return true;
+      const q = searchQuery.trim().toLowerCase();
+      return u.username.toLowerCase().includes(q);
+    });
+  }, [users, searchQuery, filterRole]);
 
   useEffect(() => {
     loadUsers();
@@ -62,16 +74,46 @@ function AdminDashboard() {
       <main className="card list-card admin-card">
         <div className="section-header">
           <div>
-            <h2>System Users</h2>
+            <h2>
+              System users ({filteredUsers.length}
+              {filteredUsers.length !== users.length ? ` of ${users.length}` : ''})
+            </h2>
             <p>Only admins can access this page.</p>
           </div>
         </div>
+
+        <CrudListFilters
+          meta={
+            loading ? 'Loading…' : `${filteredUsers.length} match${filteredUsers.length === 1 ? '' : 'es'}`
+          }
+        >
+          <label className="equipment-filter-field">
+            <span className="filter-label">Search username</span>
+            <input
+              type="search"
+              placeholder="Filter by username…"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              aria-label="Search users by username"
+            />
+          </label>
+          <label className="equipment-filter-field">
+            <span className="filter-label">Role</span>
+            <select value={filterRole} onChange={(e) => setFilterRole(e.target.value)}>
+              <option value="">All roles</option>
+              <option value="user">Citizen</option>
+              <option value="volunteer">Volunteer</option>
+              <option value="staff">Staff</option>
+              <option value="admin">Admin</option>
+            </select>
+          </label>
+        </CrudListFilters>
 
         {error && <p className="error">{error}</p>}
         {loading && <p>Loading users...</p>}
 
         <div className="admin-grid">
-          {users.map((user) => (
+          {filteredUsers.map((user) => (
             <article key={user._id} className="data-card admin-user-card">
               <div className="card-row">
                 <div>
@@ -102,6 +144,9 @@ function AdminDashboard() {
             </article>
           ))}
           {!loading && users.length === 0 && <p className="notice">No users found yet.</p>}
+          {!loading && users.length > 0 && filteredUsers.length === 0 && (
+            <p className="notice">No users match the current filters.</p>
+          )}
         </div>
       </main>
     </div>

@@ -480,7 +480,16 @@ app.delete('/api/volunteers/:id', async (req, res) => {
 app.get('/api/resources', async (req, res) => {
   const user = await getUserFromToken(req, res);
   if (!user) return;
-  const response = await axios.get(`${RESOURCE_URL}/resources`);
+  const params = new URLSearchParams();
+  for (const key of ['category', 'status']) {
+    const v = req.query[key];
+    if (v !== undefined && String(v).trim() !== '') {
+      params.append(key, String(v).trim());
+    }
+  }
+  const qs = params.toString();
+  const url = qs ? `${RESOURCE_URL}/resources?${qs}` : `${RESOURCE_URL}/resources`;
+  const response = await axios.get(url);
   res.json(response.data);
 });
 

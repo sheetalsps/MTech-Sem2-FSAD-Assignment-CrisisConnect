@@ -75,8 +75,17 @@ export async function deleteVolunteer(id) {
   });
 }
 
-export function fetchResources() {
-  return requestJson(`${GATEWAY}/resources`);
+export function fetchResources(query = {}) {
+  const params = new URLSearchParams();
+  if (query.category && String(query.category).trim()) {
+    params.set('category', String(query.category).trim());
+  }
+  if (query.status && String(query.status).trim()) {
+    params.set('status', String(query.status).trim());
+  }
+  const qs = params.toString();
+  const url = qs ? `${GATEWAY}/resources?${qs}` : `${GATEWAY}/resources`;
+  return requestJson(url);
 }
 
 export function fetchResource(id) {

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   fetchVolunteers,
@@ -8,6 +8,14 @@ import {
   patchVolunteerApproval
 } from './services/api';
 import { log } from './logger';
+import CrudListFilters from './components/CrudListFilters';
+
+function approvalGroup(v) {
+  const s = v.approvalStatus;
+  if (s === 'pending') return 'pending';
+  if (s === 'rejected') return 'rejected';
+  return 'approved';
+}
 
 function VolunteerManager() {
   const [volunteers, setVolunteers] = useState([]);
@@ -20,6 +28,22 @@ function VolunteerManager() {
   });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterAvailable, setFilterAvailable] = useState('');
+  const [filterApproval, setFilterApproval] = useState('');
+
+  const filteredVolunteers = useMemo(() => {
+    return volunteers.filter((v) => {
+      if (filterApproval && approvalGroup(v) !== filterApproval) return false;
+      if (filterAvailable === 'yes' && !v.available) return false;
+      if (filterAvailable === 'no' && v.available) return false;
+      if (!searchQuery.trim()) return true;
+      const q = searchQuery.trim().toLowerCase();
+      const skills = (v.skills || []).join(' ').toLowerCase();
+      const blob = `${v.name} ${v.location} ${skills} ${v.username || ''}`.toLowerCase();
+      return blob.includes(q);
+    });
+  }, [volunteers, searchQuery, filterAvailable, filterApproval]);
 
   useEffect(() => {
     loadVolunteers();
@@ -176,10 +200,51 @@ function VolunteerManager() {
 
         <div className="list-section">
           <div className="card">
-            <h2>Volunteer Roster ({volunteers.length})</h2>
+            <h2>
+              Volunteer roster ({filteredVolunteers.length}
+              {filteredVolunteers.length !== volunteers.length ? ` of ${volunteers.length}` : ''})
+            </h2>
+            <CrudListFilters
+              meta={
+                loading
+                  ? 'Loading…'
+                  : `${filteredVolunteers.length} match${filteredVolunteers.length === 1 ? '' : 'es'}`
+              }
+            >
+              <label className="equipment-filter-field">
+                <span className="filter-label">Search</span>
+                <input
+                  type="search"
+                  placeholder="Name, location, skills, username…"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  aria-label="Search volunteers"
+                />
+              </label>
+              <label className="equipment-filter-field">
+                <span className="filter-label">Deployment</span>
+                <select
+                  value={filterAvailable}
+                  onChange={(e) => setFilterAvailable(e.target.value)}
+                >
+                  <option value="">All</option>
+                  <option value="yes">Available</option>
+                  <option value="no">Unavailable</option>
+                </select>
+              </label>
+              <label className="equipment-filter-field">
+                <span className="filter-label">Approval</span>
+                <select value={filterApproval} onChange={(e) => setFilterApproval(e.target.value)}>
+                  <option value="">All</option>
+                  <option value="pending">Pending</option>
+                  <option value="approved">Approved</option>
+                  <option value="rejected">Rejected</option>
+                </select>
+              </label>
+            </CrudListFilters>
             {loading && <p>Loading volunteers...</p>}
             <div className="resource-grid">
-              {volunteers.map((volunteer) => (
+              {filteredVolunteers.map((volunteer) => (
                 <article key={volunteerKey(volunteer)} className="resource-card">
                   <div className="card-row">
                     <span className="pill type-pill">{volunteer.name}</span>
@@ -222,6 +287,11 @@ function VolunteerManager() {
                 </article>
               ))}
               {!loading && volunteers.length === 0 && <p className="notice">No volunteers available yet.</p>}
+              {!loading && volunteers.length > 0 && filteredVolunteers.length === 0 && (
+                <p className="notice" style={{ gridColumn: '1 / -1' }}>
+                  No volunteers match the current filters.
+                </p>
+              )}
             </div>
           </div>
         </div>

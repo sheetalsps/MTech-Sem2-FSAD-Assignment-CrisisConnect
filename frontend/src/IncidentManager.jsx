@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { fetchIncidents, createIncident, updateIncident, deleteIncident } from './services/api';
 import { log } from './logger';
+import CrudListFilters from './components/CrudListFilters';
 
 function IncidentManager() {
   const [incidents, setIncidents] = useState([]);
@@ -14,6 +15,20 @@ function IncidentManager() {
     status: 'Open'
   });
   const [loading, setLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterStatus, setFilterStatus] = useState('');
+  const [filterPriority, setFilterPriority] = useState('');
+
+  const filteredIncidents = useMemo(() => {
+    return incidents.filter((inc) => {
+      if (filterStatus && inc.status !== filterStatus) return false;
+      if (filterPriority && inc.priority !== filterPriority) return false;
+      if (!searchQuery.trim()) return true;
+      const q = searchQuery.trim().toLowerCase();
+      const blob = `${inc.type} ${inc.location} ${inc.description || ''}`.toLowerCase();
+      return blob.includes(q);
+    });
+  }, [incidents, searchQuery, filterStatus, filterPriority]);
 
   useEffect(() => {
     loadIncidents();
@@ -177,10 +192,51 @@ function IncidentManager() {
 
         <div className="list-section">
           <div className="card">
-            <h2>All Incidents ({incidents.length})</h2>
+            <h2>
+              Incidents ({filteredIncidents.length}
+              {filteredIncidents.length !== incidents.length ? ` of ${incidents.length}` : ''})
+            </h2>
+            <CrudListFilters
+              meta={
+                loading
+                  ? 'Loading…'
+                  : `${filteredIncidents.length} match${filteredIncidents.length === 1 ? '' : 'es'}`
+              }
+            >
+              <label className="equipment-filter-field">
+                <span className="filter-label">Search</span>
+                <input
+                  type="search"
+                  placeholder="Type, location, description…"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  aria-label="Search incidents"
+                />
+              </label>
+              <label className="equipment-filter-field">
+                <span className="filter-label">Status</span>
+                <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
+                  <option value="">All statuses</option>
+                  <option value="Open">Open</option>
+                  <option value="In Progress">In Progress</option>
+                  <option value="Resolved">Resolved</option>
+                  <option value="Closed">Closed</option>
+                </select>
+              </label>
+              <label className="equipment-filter-field">
+                <span className="filter-label">Priority</span>
+                <select value={filterPriority} onChange={(e) => setFilterPriority(e.target.value)}>
+                  <option value="">All priorities</option>
+                  <option value="Low">Low</option>
+                  <option value="Medium">Medium</option>
+                  <option value="High">High</option>
+                  <option value="Critical">Critical</option>
+                </select>
+              </label>
+            </CrudListFilters>
             {loading && <p>Loading...</p>}
             <div className="incident-grid">
-              {incidents.map((incident) => (
+              {filteredIncidents.map((incident) => (
                 <article key={incident._id} className="incident-card">
                   <div className="card-row">
                     <span className="pill type-pill">{incident.type}</span>
@@ -204,6 +260,11 @@ function IncidentManager() {
                   </div>
                 </article>
               ))}
+              {!loading && filteredIncidents.length === 0 && incidents.length > 0 && (
+                <p className="notice" style={{ gridColumn: '1 / -1' }}>
+                  No incidents match the current filters.
+                </p>
+              )}
             </div>
           </div>
         </div>
