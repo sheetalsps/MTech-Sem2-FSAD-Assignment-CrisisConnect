@@ -1,9 +1,12 @@
 const express = require('express');
 const cors = require('cors');
+const { createLogger, httpMiddleware, listenServer } = require('./logger');
 
+const logger = createLogger('priority');
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use(httpMiddleware(logger));
 
 function classifyPriority(details) {
   const text = `${details.type || ''} ${details.description || ''}`.toLowerCase();
@@ -21,6 +24,6 @@ app.post('/priority', (req, res) => {
   res.json({ priority });
 });
 
-app.listen(5004, () => {
-  console.log('Priority Service running on http://localhost:5004');
+listenServer(app, 5004, logger, () => {
+  logger.info('Priority Service running on http://localhost:5004');
 });

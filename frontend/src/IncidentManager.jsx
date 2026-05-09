@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { fetchIncidents, createIncident, updateIncident, deleteIncident } from './services/api';
+import { log } from './logger';
 
 function IncidentManager() {
   const [incidents, setIncidents] = useState([]);
@@ -24,7 +25,7 @@ function IncidentManager() {
       const data = await fetchIncidents();
       setIncidents(data);
     } catch (error) {
-      console.error('Error loading incidents:', error);
+      log.error('Error loading incidents', error);
     } finally {
       setLoading(false);
     }
@@ -53,7 +54,7 @@ function IncidentManager() {
       });
       loadIncidents();
     } catch (error) {
-      console.error('Error saving incident:', error);
+      log.error('Error saving incident', error);
     } finally {
       setLoading(false);
     }
@@ -77,7 +78,7 @@ function IncidentManager() {
         await deleteIncident(id);
         loadIncidents();
       } catch (error) {
-        console.error('Error deleting incident:', error);
+        log.error('Error deleting incident', error);
       } finally {
         setLoading(false);
       }

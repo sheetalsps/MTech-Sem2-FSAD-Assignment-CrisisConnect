@@ -1,15 +1,18 @@
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
+const { createLogger, httpMiddleware, listenServer } = require('./logger');
 
+const logger = createLogger('volunteer');
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use(httpMiddleware(logger));
 
 mongoose.connect('mongodb://localhost:27017/crisisconnect')
-  .then(() => console.log('Volunteer Service: Connected to MongoDB'))
+  .then(() => logger.info('Connected to MongoDB'))
   .catch((err) => {
-    console.error('Volunteer Service: MongoDB connection error:', err.message);
+    logger.error({ err: err.message }, 'MongoDB connection error');
     process.exit(1);
   });
 
@@ -206,6 +209,6 @@ app.delete('/volunteers/:id', async (req, res) => {
   }
 });
 
-app.listen(5002, () => {
-  console.log('Volunteer Service running on http://localhost:5002');
+listenServer(app, 5002, logger, () => {
+  logger.info('Volunteer Service running on http://localhost:5002');
 });

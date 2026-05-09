@@ -20,10 +20,13 @@ const {
   assignmentPatchBody,
   volunteerApprovalBody
 } = require('./validation');
+const { createLogger, httpMiddleware, listenServer } = require('./logger');
 
+const logger = createLogger('gateway');
 const app = express();
 app.use(cors());
 app.use(express.json({ limit: '32mb' }));
+app.use(httpMiddleware(logger));
 
 attachPrometheus(app);
 
@@ -550,9 +553,9 @@ app.post('/api/priority', async (req, res) => {
   res.json(response.data);
 });
 
-app.listen(4000, () => {
-  console.log('API Gateway running on http://localhost:4000');
-  console.log('Swagger UI: http://localhost:4000/api-docs');
-  console.log('OpenAPI YAML: http://localhost:4000/openapi.yaml');
-  console.log('Prometheus metrics: http://localhost:4000/metrics');
+listenServer(app, 4000, logger, () => {
+  logger.info('API Gateway running on http://localhost:4000');
+  logger.info('Swagger UI: http://localhost:4000/api-docs');
+  logger.info('OpenAPI YAML: http://localhost:4000/openapi.yaml');
+  logger.info('Prometheus metrics: http://localhost:4000/metrics');
 });

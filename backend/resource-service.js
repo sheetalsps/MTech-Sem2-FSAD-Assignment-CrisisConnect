@@ -1,20 +1,22 @@
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
+const { createLogger, httpMiddleware, listenServer } = require('./logger');
 
+const logger = createLogger('resource');
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use(httpMiddleware(logger));
 
-// Connect to MongoDB
 mongoose.connect('mongodb://localhost:27017/crisisconnect')
   .then(() => {
-    console.log('Resource Service: Connected to MongoDB');
+    logger.info('Connected to MongoDB');
   })
   .catch(err => {
-    console.error('Resource Service: MongoDB connection error:', err.message);
-    console.log('Please ensure MongoDB is installed and running on localhost:27017');
-    console.log('Installation instructions: https://docs.mongodb.com/manual/installation/');
+    logger.error({ err: err.message }, 'MongoDB connection error');
+    logger.info('Please ensure MongoDB is installed and running on localhost:27017');
+    logger.info('Installation instructions: https://docs.mongodb.com/manual/installation/');
     process.exit(1);
   });
 
@@ -130,6 +132,6 @@ app.delete('/resources/:id', async (req, res) => {
   }
 });
 
-app.listen(5003, () => {
-  console.log('Resource Service running on http://localhost:5003');
+listenServer(app, 5003, logger, () => {
+  logger.info('Resource Service running on http://localhost:5003');
 });

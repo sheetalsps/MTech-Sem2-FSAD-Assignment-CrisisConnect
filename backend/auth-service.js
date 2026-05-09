@@ -2,18 +2,21 @@ const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const crypto = require('crypto');
+const { createLogger, httpMiddleware, listenServer } = require('./logger');
 
+const logger = createLogger('auth');
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use(httpMiddleware(logger));
 
 mongoose.connect('mongodb://localhost:27017/crisisconnect')
   .then(() => {
-    console.log('Auth Service: Connected to MongoDB');
+    logger.info('Connected to MongoDB');
   })
   .catch(err => {
-    console.error('Auth Service: MongoDB connection error:', err.message);
-    console.log('Please ensure MongoDB is installed and running on localhost:27017');
+    logger.error({ err: err.message }, 'MongoDB connection error');
+    logger.info('Please ensure MongoDB is installed and running on localhost:27017');
     process.exit(1);
   });
 
@@ -191,6 +194,6 @@ app.delete('/users/:id', async (req, res) => {
   }
 });
 
-app.listen(5005, () => {
-  console.log('Auth Service running on http://localhost:5005');
+listenServer(app, 5005, logger, () => {
+  logger.info('Auth Service running on http://localhost:5005');
 });

@@ -1,15 +1,18 @@
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
+const { createLogger, httpMiddleware, listenServer } = require('./logger');
 
+const logger = createLogger('incident');
 const app = express();
 app.use(cors());
 app.use(express.json({ limit: '32mb' }));
+app.use(httpMiddleware(logger));
 
 mongoose.connect('mongodb://localhost:27017/crisisconnect')
-  .then(() => console.log('Connected to MongoDB'))
+  .then(() => logger.info('Connected to MongoDB'))
   .catch((err) => {
-    console.error('MongoDB connection error:', err.message);
+    logger.error({ err: err.message }, 'MongoDB connection error');
     process.exit(1);
   });
 
@@ -414,6 +417,6 @@ app.delete('/incidents/:id', async (req, res) => {
   }
 });
 
-app.listen(5001, () => {
-  console.log('Incident Service running on http://localhost:5001');
+listenServer(app, 5001, logger, () => {
+  logger.info('Incident Service running on http://localhost:5001');
 });

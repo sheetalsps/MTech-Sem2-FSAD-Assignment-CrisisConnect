@@ -7,6 +7,7 @@ import {
   deleteVolunteer,
   patchVolunteerApproval
 } from './services/api';
+import { log } from './logger';
 
 function VolunteerManager() {
   const [volunteers, setVolunteers] = useState([]);
@@ -30,7 +31,7 @@ function VolunteerManager() {
       const data = await fetchVolunteers();
       setVolunteers(data);
     } catch (error) {
-      console.error('Error loading volunteers:', error);
+      log.error('Error loading volunteers', error);
     } finally {
       setLoading(false);
     }
@@ -76,7 +77,7 @@ function VolunteerManager() {
       setForm({ name: '', location: '', skills: '', available: true });
       await loadVolunteers();
     } catch (error) {
-      console.error('Error saving volunteer:', error);
+      log.error('Error saving volunteer', error);
     } finally {
       setLoading(false);
     }
@@ -90,7 +91,7 @@ function VolunteerManager() {
       await patchVolunteerApproval(volunteerId, approvalStatus);
       await loadVolunteers();
     } catch (error) {
-      console.error('Approval failed:', error);
+      log.error('Approval failed', error);
     } finally {
       setLoading(false);
     }
@@ -114,7 +115,7 @@ function VolunteerManager() {
       await deleteVolunteer(id);
       await loadVolunteers();
     } catch (error) {
-      console.error('Error deleting volunteer:', error);
+      log.error('Error deleting volunteer', error);
     } finally {
       setLoading(false);
     }

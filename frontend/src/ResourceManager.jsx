@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { fetchResources, createResource, updateResource, deleteResource } from './services/api';
+import { log } from './logger';
 
 function ResourceManager() {
   const [resources, setResources] = useState([]);
@@ -30,7 +31,7 @@ function ResourceManager() {
       const data = await fetchResources();
       setResources(data);
     } catch (error) {
-      console.error('Error loading resources:', error);
+      log.error('Error loading resources', error);
     } finally {
       setLoading(false);
     }
@@ -85,7 +86,7 @@ function ResourceManager() {
       });
       loadResources();
     } catch (error) {
-      console.error('Error saving resource:', error);
+      log.error('Error saving resource', error);
     } finally {
       setLoading(false);
     }
@@ -115,7 +116,7 @@ function ResourceManager() {
         await deleteResource(id);
         loadResources();
       } catch (error) {
-        console.error('Error deleting resource:', error);
+        log.error('Error deleting resource', error);
       } finally {
         setLoading(false);
       }
