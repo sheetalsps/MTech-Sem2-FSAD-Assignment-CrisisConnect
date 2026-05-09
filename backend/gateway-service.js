@@ -16,8 +16,23 @@ app.get('/api/incidents', async (req, res) => {
   res.json(response.data);
 });
 
+app.get('/api/incidents/:id', async (req, res) => {
+  const response = await axios.get(`${INCIDENT_URL}/incidents/${req.params.id}`);
+  res.json(response.data);
+});
+
 app.post('/api/incidents', async (req, res) => {
   const response = await axios.post(`${INCIDENT_URL}/incidents`, req.body);
+  res.json(response.data);
+});
+
+app.put('/api/incidents/:id', async (req, res) => {
+  const response = await axios.put(`${INCIDENT_URL}/incidents/${req.params.id}`, req.body);
+  res.json(response.data);
+});
+
+app.delete('/api/incidents/:id', async (req, res) => {
+  const response = await axios.delete(`${INCIDENT_URL}/incidents/${req.params.id}`);
   res.json(response.data);
 });
 

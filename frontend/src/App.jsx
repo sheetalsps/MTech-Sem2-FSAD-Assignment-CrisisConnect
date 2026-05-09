@@ -1,6 +1,7 @@
 import { Routes, Route, Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { fetchIncidents, fetchVolunteers, fetchResources, createIncident } from './services/api';
+import IncidentManager from './IncidentManager';
 
 function Dashboard() {
   const [incidents, setIncidents] = useState([]);
@@ -22,7 +23,10 @@ function Dashboard() {
         <div>
           <h1>CrisisConnect</h1>
           <p>Coordinate emergency resources, volunteers, and live help requests.</p>
-          <Link className="button" to="/request">Submit SOS Request</Link>
+          <div className="header-actions">
+            <Link className="button" to="/request">Submit SOS Request</Link>
+            <Link className="button secondary" to="/incidents">Manage Incidents</Link>
+          </div>
         </div>
       </header>
 
@@ -30,11 +34,12 @@ function Dashboard() {
         <h2>Active Incidents</h2>
         <div className="card-grid">
           {incidents.map((incident) => (
-            <article key={incident.id} className="card">
+            <article key={incident._id} className="card">
               <h3>{incident.type}</h3>
               <p>{incident.description}</p>
               <p><strong>Location:</strong> {incident.location}</p>
               <p><strong>Priority:</strong> {incident.priority}</p>
+              <p><strong>Status:</strong> {incident.status}</p>
             </article>
           ))}
         </div>
@@ -120,6 +125,7 @@ function App() {
     <Routes>
       <Route path="/" element={<Dashboard />} />
       <Route path="/request" element={<RequestForm />} />
+      <Route path="/incidents" element={<IncidentManager />} />
     </Routes>
   );
 }

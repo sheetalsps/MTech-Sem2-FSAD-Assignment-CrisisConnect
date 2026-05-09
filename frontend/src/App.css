@@ -101,8 +101,143 @@ button {
   color: #0f5132;
 }
 
+.header-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.incident-manager {
+  display: grid;
+  gap: 24px;
+  grid-template-columns: 1fr 2fr;
+}
+
+.form-section .card {
+  position: sticky;
+  top: 24px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.form-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.incident-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.incident-item {
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px;
+  background: #f8fafc;
+}
+
+.incident-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+
+.incident-header h3 {
+  margin: 0;
+  color: #1e293b;
+}
+
+.incident-meta {
+  display: flex;
+  gap: 8px;
+}
+
+.priority, .status {
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.priority.low { background: #dbeafe; color: #1e40af; }
+.priority.medium { background: #fef3c7; color: #92400e; }
+.priority.high { background: #fee2e2; color: #dc2626; }
+.priority.critical { background: #7f1d1d; color: white; }
+
+.status.open { background: #dbeafe; color: #1e40af; }
+.status.in-progress { background: #fef3c7; color: #92400e; }
+.status.resolved { background: #d1fae5; color: #065f46; }
+.status.closed { background: #e5e7eb; color: #374151; }
+
+.location {
+  color: #64748b;
+  font-size: 0.875rem;
+  margin: 4px 0;
+}
+
+.description {
+  color: #475569;
+  margin: 8px 0;
+}
+
+.incident-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.edit-btn {
+  background: #f59e0b;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 0.875rem;
+}
+
+.delete-btn {
+  background: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 0.875rem;
+}
+
+.edit-btn:hover { background: #d97706; }
+.delete-btn:hover { background: #dc2626; }
+
+@media (max-width: 1024px) {
+  .incident-manager {
+    grid-template-columns: 1fr;
+  }
+
+  .form-section .card {
+    position: static;
+  }
+}
+
 @media (max-width: 840px) {
   .list-panel {
     grid-template-columns: 1fr;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .header-actions {
+    flex-direction: column;
   }
 }
