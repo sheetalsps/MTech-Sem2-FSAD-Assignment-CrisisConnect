@@ -1,10 +1,27 @@
 const express = require('express');
+const path = require('path');
+const fs = require('fs');
 const axios = require('axios');
 const cors = require('cors');
+const yaml = require('js-yaml');
+const swaggerUi = require('swagger-ui-express');
 
 const app = express();
 app.use(cors());
 app.use(express.json({ limit: '32mb' }));
+
+const openapiSpec = yaml.load(
+  fs.readFileSync(path.join(__dirname, 'openapi.yaml'), 'utf8')
+);
+
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(openapiSpec, {
+  customSiteTitle: 'CrisisConnect API'
+}));
+
+app.get('/openapi.yaml', (req, res) => {
+  res.type('text/yaml; charset=utf-8');
+  res.sendFile(path.join(__dirname, 'openapi.yaml'));
+});
 
 const INCIDENT_URL = 'http://localhost:5001';
 const VOLUNTEER_URL = 'http://localhost:5002';
@@ -512,4 +529,6 @@ app.post('/api/priority', async (req, res) => {
 
 app.listen(4000, () => {
   console.log('API Gateway running on http://localhost:4000');
+  console.log('Swagger UI: http://localhost:4000/api-docs');
+  console.log('OpenAPI YAML: http://localhost:4000/openapi.yaml');
 });

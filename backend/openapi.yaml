@@ -1,0 +1,853 @@
+openapi: 3.0.3
+info:
+  title: CrisisConnect API
+  description: |
+    HTTP API for the **CrisisConnect** API gateway (`gateway-service.js`). All paths are relative to the gateway base URL.
+    Most routes require a **Bearer** token from `POST /api/auth/login` (or `POST /api/auth/signup`), sent as `Authorization: Bearer <token>`.
+  version: 1.0.0
+  contact:
+    name: CrisisConnect
+
+servers:
+  - url: http://localhost:4000
+    description: Local development
+
+tags:
+  - name: Auth
+    description: Signup, login, current user
+  - name: Incidents
+    description: SOS requests, chat, location, assignments
+  - name: Volunteers
+    description: Roster, registration, approval
+  - name: Resources
+    description: Inventory (general, hospital beds, blood)
+  - name: Users
+    description: Admin user management
+  - name: Analytics
+    description: Operations metrics
+  - name: Broadcasts
+    description: Emergency alerts
+  - name: Priority
+    description: AI-style priority scoring (keyword rules)
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: hex
+      description: Token returned from login or signup
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+    UserSummary:
+      type: object
+      properties:
+        id:
+          type: string
+        username:
+          type: string
+        role:
+          type: string
+          enum: [user, volunteer, staff, admin]
+    SignupRequest:
+      type: object
+      required: [username, password]
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+        role:
+          type: string
+          enum: [user, volunteer, staff, admin]
+          default: user
+    LoginRequest:
+      type: object
+      required: [username, password]
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+    AuthTokenResponse:
+      type: object
+      properties:
+        token:
+          type: string
+        user:
+          $ref: '#/components/schemas/UserSummary'
+    Incident:
+      type: object
+      description: Incident document from MongoDB (shape varies)
+    Volunteer:
+      type: object
+      properties:
+        id:
+          type: string
+        _id:
+          type: string
+        userId:
+          type: string
+        username:
+          type: string
+        name:
+          type: string
+        skills:
+          type: array
+          items:
+            type: string
+        location:
+          type: string
+        latitude:
+          type: number
+        longitude:
+          type: number
+        available:
+          type: boolean
+        approvalStatus:
+          type: string
+          enum: [pending, approved, rejected]
+    VolunteerRegisterRequest:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        skills:
+          type: array
+          items:
+            type: string
+        location:
+          type: string
+        latitude:
+          type: number
+        longitude:
+          type: number
+    ApprovalPatch:
+      type: object
+      required: [approvalStatus]
+      properties:
+        approvalStatus:
+          type: string
+          enum: [pending, approved, rejected]
+    Resource:
+      type: object
+      properties:
+        _id:
+          type: string
+        resourceType:
+          type: string
+          enum: [general, hospital_bed, blood_request]
+        category:
+          type: string
+        quantity:
+          type: integer
+        location:
+          type: string
+        status:
+          type: string
+          enum: [Available, In Use, Depleted, Reserved]
+        description:
+          type: string
+        wardType:
+          type: string
+        bedUnitLabel:
+          type: string
+        bloodGroup:
+          type: string
+        bloodUrgency:
+          type: string
+          enum: [low, medium, high, critical]
+    Broadcast:
+      type: object
+      properties:
+        _id:
+          type: string
+        title:
+          type: string
+        message:
+          type: string
+        severity:
+          type: string
+          enum: [info, warning, critical]
+        createdBy:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+    BroadcastCreate:
+      type: object
+      required: [title, message]
+      properties:
+        title:
+          type: string
+        message:
+          type: string
+        severity:
+          type: string
+          enum: [info, warning, critical]
+    AnalyticsSummary:
+      type: object
+      properties:
+        totalIncidents:
+          type: integer
+        byStatus:
+          type: object
+          additionalProperties:
+            type: integer
+        byPriority:
+          type: object
+          additionalProperties:
+            type: integer
+        createdLast7Days:
+          type: integer
+        activeAssignments:
+          type: integer
+    NearbyIncidentItem:
+      type: object
+      properties:
+        incident:
+          $ref: '#/components/schemas/Incident'
+        distanceKm:
+          type: number
+    PriorityRequest:
+      type: object
+      properties:
+        type:
+          type: string
+        description:
+          type: string
+    PriorityResponse:
+      type: object
+      properties:
+        priority:
+          type: string
+          enum: [Low, Medium, High, Critical]
+    LiveLocationBody:
+      type: object
+      required: [latitude, longitude]
+      properties:
+        latitude:
+          type: number
+        longitude:
+          type: number
+    StaffAssignmentBody:
+      type: object
+      required: [volunteerProfileId]
+      properties:
+        volunteerProfileId:
+          type: string
+        volunteerUserId:
+          type: string
+        volunteerName:
+          type: string
+        status:
+          type: string
+          enum: [pending, accepted, rejected, in_progress, completed]
+    AssignmentPatch:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [pending, accepted, rejected, in_progress, completed]
+        progressNote:
+          type: string
+    ChatMessageBody:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string
+
+  parameters:
+    IncidentId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+      description: MongoDB ObjectId of the incident
+    VolunteerRecordId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Volunteer profile id
+    MongoId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+    UserId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+
+paths:
+  /api/auth/signup:
+    post:
+      tags: [Auth]
+      summary: Register a new account
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignupRequest'
+      responses:
+        '201':
+          description: Account created; returns token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthTokenResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Username already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/auth/login:
+    post:
+      tags: [Auth]
+      summary: Login and obtain Bearer token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthTokenResponse'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/auth/me:
+    get:
+      tags: [Auth]
+      summary: Current session user
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User summary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserSummary'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/analytics/summary:
+    get:
+      tags: [Analytics]
+      summary: Incident analytics (staff/admin)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Aggregated counts
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalyticsSummary'
+        '403':
+          description: Forbidden
+
+  /api/broadcasts:
+    get:
+      tags: [Broadcasts]
+      summary: List recent broadcasts
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Broadcast list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Broadcast'
+    post:
+      tags: [Broadcasts]
+      summary: Create broadcast (admin only)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BroadcastCreate'
+      responses:
+        '201':
+          description: Created
+        '403':
+          description: Forbidden
+
+  /api/incidents/nearby:
+    get:
+      tags: [Incidents]
+      summary: Open incidents near GPS coordinates
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: lat
+          in: query
+          required: true
+          schema:
+            type: number
+        - name: lng
+          in: query
+          required: true
+          schema:
+            type: number
+        - name: radiusKm
+          in: query
+          schema:
+            type: number
+            default: 50
+      responses:
+        '200':
+          description: Incidents with distance
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/NearbyIncidentItem'
+        '403':
+          description: Forbidden
+
+  /api/incidents:
+    get:
+      tags: [Incidents]
+      summary: List all incidents
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Incident array
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Incident'
+    post:
+      tags: [Incidents]
+      summary: Create incident (usually after priority step from client)
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Incident'
+      responses:
+        '200':
+          description: Created incident
+
+  /api/incidents/{id}:
+    get:
+      tags: [Incidents]
+      summary: Get incident by id
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IncidentId'
+      responses:
+        '200':
+          description: Incident
+        '404':
+          description: Not found
+    put:
+      tags: [Incidents]
+      summary: Update incident (staff/admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IncidentId'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Incident'
+      responses:
+        '200':
+          description: Updated
+        '403':
+          description: Forbidden
+    delete:
+      tags: [Incidents]
+      summary: Delete incident (admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IncidentId'
+      responses:
+        '200':
+          description: Deleted
+        '403':
+          description: Forbidden
+
+  /api/incidents/{id}/live-location:
+    post:
+      tags: [Incidents]
+      summary: Append GPS point and update coordinates (requester or staff)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IncidentId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LiveLocationBody'
+      responses:
+        '200':
+          description: Updated incident
+        '403':
+          description: Forbidden
+
+  /api/incidents/{id}/messages:
+    post:
+      tags: [Incidents]
+      summary: Append chat message (sender set from token)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IncidentId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatMessageBody'
+      responses:
+        '201':
+          description: Message stored
+
+  /api/incidents/{id}/assignments/offer:
+    post:
+      tags: [Incidents]
+      summary: Volunteer offers help (approved volunteer profile required)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IncidentId'
+      responses:
+        '201':
+          description: Assignment row added
+        '403':
+          description: Forbidden
+
+  /api/incidents/{id}/assignments:
+    post:
+      tags: [Incidents]
+      summary: Staff assigns volunteer to incident
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IncidentId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StaffAssignmentBody'
+      responses:
+        '200':
+          description: Updated incident
+
+  /api/incidents/{id}/assignments/{volunteerProfileId}:
+    patch:
+      tags: [Incidents]
+      summary: Update assignment status / progress (volunteer owns row, or staff/admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IncidentId'
+        - name: volunteerProfileId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssignmentPatch'
+      responses:
+        '200':
+          description: Updated incident
+
+  /api/my-requests:
+    get:
+      tags: [Incidents]
+      summary: Incidents submitted by current user (requester filter)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Incident array
+
+  /api/my-assignments:
+    get:
+      tags: [Incidents]
+      summary: Incidents where current user has an assignment row
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Incident array
+
+  /api/volunteers:
+    get:
+      tags: [Volunteers]
+      summary: Volunteer roster (approved only without staff token; full list for staff/admin)
+      security: []
+      responses:
+        '200':
+          description: Volunteers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Volunteer'
+    post:
+      tags: [Volunteers]
+      summary: Create volunteer record (staff/admin)
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Volunteer'
+      responses:
+        '201':
+          description: Created
+
+  /api/volunteers/me/profile:
+    get:
+      tags: [Volunteers]
+      summary: Volunteer profile linked to current account
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Volunteer profile
+        '404':
+          description: No profile
+
+  /api/volunteers/register:
+    post:
+      tags: [Volunteers]
+      summary: Submit volunteer registration (role volunteer)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VolunteerRegisterRequest'
+      responses:
+        '201':
+          description: Pending approval
+
+  /api/volunteers/{id}/approval:
+    patch:
+      tags: [Volunteers]
+      summary: Approve or reject volunteer (staff/admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/VolunteerRecordId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApprovalPatch'
+      responses:
+        '200':
+          description: Updated volunteer
+
+  /api/volunteers/{id}:
+    get:
+      tags: [Volunteers]
+      summary: Get volunteer by id
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/VolunteerRecordId'
+      responses:
+        '200':
+          description: Volunteer
+    put:
+      tags: [Volunteers]
+      summary: Update volunteer (staff/admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/VolunteerRecordId'
+      responses:
+        '200':
+          description: Updated
+    delete:
+      tags: [Volunteers]
+      summary: Delete volunteer (staff/admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/VolunteerRecordId'
+      responses:
+        '200':
+          description: Deleted
+
+  /api/resources:
+    get:
+      tags: [Resources]
+      summary: List resources
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Resource array
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Resource'
+    post:
+      tags: [Resources]
+      summary: Create resource (staff/admin)
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Resource'
+      responses:
+        '201':
+          description: Created
+
+  /api/resources/{id}:
+    put:
+      tags: [Resources]
+      summary: Update resource (staff/admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/MongoId'
+      responses:
+        '200':
+          description: Updated
+    delete:
+      tags: [Resources]
+      summary: Delete resource (staff/admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/MongoId'
+      responses:
+        '200':
+          description: Deleted
+
+  /api/users:
+    get:
+      tags: [Users]
+      summary: List users (admin)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User documents
+
+  /api/users/{id}:
+    put:
+      tags: [Users]
+      summary: Update user role or username (admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                role:
+                  type: string
+                  enum: [user, volunteer, staff, admin]
+                username:
+                  type: string
+      responses:
+        '200':
+          description: Updated user
+    delete:
+      tags: [Users]
+      summary: Delete user (admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+      responses:
+        '200':
+          description: Deleted
+
+  /api/priority:
+    post:
+      tags: [Priority]
+      summary: Classify priority from incident text (no JWT required)
+      security: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PriorityRequest'
+      responses:
+        '200':
+          description: Priority label
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PriorityResponse'
